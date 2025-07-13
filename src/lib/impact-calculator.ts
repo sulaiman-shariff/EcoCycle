@@ -152,7 +152,7 @@ function generateImpactSummary(
   condition: string,
   materialValueUSD?: number
 ): string {
-  const totalMaterials = Object.values(rawMaterials).reduce((sum: number, val: number) => sum + val, 0);
+  const totalMaterials = (Object.values(rawMaterials) as number[]).reduce((sum, val) => sum + val, 0);
 
   let summary = `Your ${deviceData.name.toLowerCase()} has an estimated carbon footprint of ${co2eq.toFixed(1)} kg CO2e. `;
 
