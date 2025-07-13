@@ -19,19 +19,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return [
-      {
-        source: '/dashboard',
-        destination: '/login',
-        permanent: false,
-        missing: [
-          {
-            type: 'cookie',
-            key: 'firebaseAuth',
-          },
-        ],
-      },
-    ]
+    return []
   },
 };
 

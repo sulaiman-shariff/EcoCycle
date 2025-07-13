@@ -1,3 +1,6 @@
 {
-  "firebase_hosting": {}
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://ecovision-1nn3s.web.app"
+  },
+  "cloud_run_deploy": {}
 }
