@@ -10,8 +10,41 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { calculateDeviceImpact, type ImpactCalculationResult } from '@/lib/impact-calculator';
-import { ewasteDataTool, EwasteDeviceDataSchema } from '@/ai/tools/ewaste-data-tool';
+import { calculateDeviceImpact } from '@/lib/impact-calculator';
+import { EwasteDeviceData, ewasteDB } from '@/data/ewaste-db';
+
+const ewasteDataTool = ai.defineTool(
+  {
+    name: 'ewasteDataTool',
+    description: 'Looks up environmental impact data for a specific electronic device model from a database.',
+    inputSchema: z.object({
+      brand: z.string().describe('The brand of the device, e.g., "Apple", "Samsung"'),
+      model: z.string().describe('The model of the device, e.g., "iPhone 14", "Galaxy S23"'),
+    }),
+    outputSchema: z.union([EwasteDeviceData, z.null()]).describe('The impact data for the device, or null if not found.'),
+  },
+  async ({ brand, model }) => {
+    console.log(`[Tool] Searching for device: ${brand} ${model}`);
+    
+    const lowerCaseBrand = brand.toLowerCase();
+    const lowerCaseModel = model.toLowerCase();
+
+    const device = ewasteDB.find(
+      (d) =>
+        d.brand.toLowerCase() === lowerCaseBrand &&
+        d.model.toLowerCase() === lowerCaseModel
+    );
+
+    if (device) {
+      console.log(`[Tool] Found device:`, device);
+      return device;
+    }
+    
+    console.log(`[Tool] Device not found.`);
+    return null;
+  }
+);
+
 
 export const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
@@ -82,7 +115,7 @@ const getImpactInsightsFlow = ai.defineFlow(
     });
 
     const toolOutput = llmResponse.toolRequest?.tool?.ewasteDataTool;
-    const specificDeviceData = toolOutput ? EwasteDeviceDataSchema.parse(toolOutput) : undefined;
+    const specificDeviceData = toolOutput ? EwasteDeviceData.parse(toolOutput) : undefined;
     
     // 2. Perform the definitive data calculation using the (optional) specific data.
     const calculationResult = await calculateDeviceImpact(input, specificDeviceData);

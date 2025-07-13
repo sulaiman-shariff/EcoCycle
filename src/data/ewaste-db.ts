@@ -14,9 +14,11 @@ export const EwasteDeviceDataSchema = z.object({
 });
 
 export type EwasteDeviceData = z.infer<typeof EwasteDeviceDataSchema>;
+export const EwasteDeviceData = EwasteDeviceDataSchema;
+
 
 // Mock database of e-waste data. In a real application, this would be a real database.
-export const ewasteDB: EwasteDeviceData[] = [
+export const ewasteDB: z.infer<typeof EwasteDeviceData>[] = [
   // Smartphones
   {
     brand: "Apple",

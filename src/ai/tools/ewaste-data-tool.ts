@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview A Genkit tool for looking up e-waste data from a mock database.
  * 
