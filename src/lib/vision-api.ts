@@ -1,3 +1,4 @@
+
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 
 // Initialize Vision API client
@@ -64,16 +65,10 @@ const CONDITION_KEYWORDS = {
 export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalysisResult> => {
   try {
     // Perform multiple analyses
-    const labelPromise = vision.labelDetection(imageUrl);
-    const textPromise = vision.textDetection(imageUrl);
-    const objectPromise = typeof vision.objectLocalization === 'function'
-      ? vision.objectLocalization(imageUrl)
-      : Promise.resolve([{ localizedObjectAnnotations: [] }]);
-
     const [labelResult, textResult, objectResult] = await Promise.all([
-      labelPromise,
-      textPromise,
-      objectPromise
+      vision.labelDetection(imageUrl),
+      vision.textDetection(imageUrl),
+      vision.objectLocalization(imageUrl),
     ]);
 
     const labels = labelResult[0].labelAnnotations || [];
@@ -119,17 +114,7 @@ export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalys
     };
   } catch (error) {
     console.error('Vision API analysis failed:', error);
-    return {
-      deviceType: 'unknown',
-      confidence: 0,
-      features: [],
-      suggestedRecyclingValue: 0,
-      environmentalImpact: {
-        co2Manufacturing: 0,
-        co2Usage: 0,
-        materialsRecoverable: []
-      }
-    };
+    throw new Error('Failed to analyze image with Vision API.');
   }
 };
 
@@ -328,4 +313,6 @@ const estimateRecyclingValue = (
   return { suggestedRecyclingValue, environmentalImpact };
 };
 
-export { vision }; 
+export { vision };
+
+    
