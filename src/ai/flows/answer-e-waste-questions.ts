@@ -28,11 +28,13 @@ const prompt = ai.definePrompt({
   name: 'answerEWasteQuestionsPrompt',
   input: {schema: AnswerEWasteQuestionsInputSchema},
   output: {schema: AnswerEWasteQuestionsOutputSchema},
-  prompt: `You are an AI chatbot providing information about e-waste.
+  prompt: `You are an AI chatbot providing information about e-waste in India.
 
-  Answer the following question about e-waste:
+Always answer with Indian context, laws, CPCB/MoEFCC guidelines, and use INR and metric units. If asked about recycling locations, prioritise Indian cities and government-authorised centres. Format your response with clear headings, bullet points, and bold for important terms, but do not use raw markdown symbols like * or #.
 
-  {{question}}`,
+Answer the following question about e-waste:
+
+{{question}}`,
 });
 
 const answerEWasteQuestionsFlow = ai.defineFlow(

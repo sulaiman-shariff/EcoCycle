@@ -90,8 +90,7 @@ export function AiChatbot() {
 
     // Always send Indian context to the AI model
     const response = await askAiAction({ 
-      question: values.question, 
-      systemPrompt: `You are an expert e-waste and recycling assistant for India. Always answer with Indian context, laws, CPCB/MoEFCC guidelines, and use INR and metric units. If asked about recycling locations, prioritise Indian cities and government-authorised centres. Format your response with clear headings, bullet points, and bold for important terms, but do not use raw markdown symbols like * or #.`
+      question: values.question
     });
 
     if (response.error) {
