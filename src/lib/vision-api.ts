@@ -79,11 +79,14 @@ export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalys
       vision.labelDetection(imageRequest),
       vision.textDetection(imageRequest),
       vision.objectLocalization(imageRequest),
-    ]);
+    ]).catch(err => {
+        console.error("Vision API Promise.all failed", err);
+        throw new Error("One or more Vision API calls failed.");
+    });
 
-    const labels = labelResult[0].labelAnnotations || [];
-    const textBlocks = textResult[0].textAnnotations || [];
-    const objects = objectResult[0].localizedObjectAnnotations || [];
+    const labels = labelResult[0]?.labelAnnotations || [];
+    const textBlocks = textResult[0]?.textAnnotations || [];
+    const objects = objectResult[0]?.localizedObjectAnnotations || [];
 
     // Extract text content
     const textContent = (textBlocks[0]?.description || '')
@@ -323,7 +326,5 @@ const estimateRecyclingValue = (
 };
 
 export { vision };
-
-    
 
     
