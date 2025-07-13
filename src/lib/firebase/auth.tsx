@@ -20,7 +20,6 @@ import React, {
 
 // Only create auth instance if Firebase is initialized
 const auth = firebase_app ? getAuth(firebase_app) : null;
-const googleProvider = new GoogleAuthProvider();
 
 export const AuthContext = createContext<{
   user: User | null;
@@ -71,7 +70,7 @@ export const signInWithGoogle = async () => {
   if (!auth) {
     throw new Error('Firebase not initialized');
   }
-
+  const googleProvider = new GoogleAuthProvider();
   let result = null,
     error = null;
   try {
