@@ -2,6 +2,8 @@
 
 import { answerEWasteQuestions, type AnswerEWasteQuestionsInput, type AnswerEWasteQuestionsOutput } from '@/ai/flows/answer-e-waste-questions';
 import { getImpactInsights, type GetImpactInsightsOutput, type GetImpactInsightsInput } from '@/ai/flows/get-impact-insights';
+import { analyzeDeviceImage, type VisionAnalysisResult } from '@/lib/vision-api';
+import { saveDeviceAnalysis } from '@/lib/firebase/firestore';
 
 export async function askAiAction(data: AnswerEWasteQuestionsInput): Promise<{ result?: AnswerEWasteQuestionsOutput; error?: string }> {
   try {
@@ -19,6 +21,24 @@ export async function calculateImpactAction(data: GetImpactInsightsInput): Promi
     return { result: insights };
   } catch (e) {
     console.error(e);
-    return { error: "Failed to get insights. The AI model might be unavailable. Please try again later." };
+    return { error: "Failed to get insights. Please check your input and try again." };
+  }
+}
+
+export async function analyzeDeviceAction(imageUrl: string, userId: string): Promise<{ result?: VisionAnalysisResult, error?: string}> {
+  try {
+    const result = await analyzeDeviceImage(imageUrl);
+    
+    // Save analysis to Firestore
+    await saveDeviceAnalysis({
+      userId: userId,
+      imageUrl: imageUrl, // In a real app, you'd upload this and get a persistent URL
+      analysisResult: result
+    });
+
+    return { result };
+  } catch (e) {
+    console.error(e);
+    return { error: "Failed to analyze the device image." };
   }
 }

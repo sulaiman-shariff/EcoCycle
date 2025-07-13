@@ -10,9 +10,10 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { calculateDeviceImpact, type ImpactCalculationResult } from '@/lib/impact-calculator';
+import { calculateDeviceImpact, type ImpactCalculationResult, type ImpactCalculationInput } from '@/lib/impact-calculator';
+import { ewasteDataTool } from '@/ai/tools/ewaste-data-tool';
 
-const GetImpactInsightsInputSchema = z.object({
+export const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
   brand: z.string().optional().describe('The brand of the device (e.g., Apple, Samsung).'),
   model: z.string().optional().describe('The model of the device (e.g., iPhone 14, Galaxy S23).'),
@@ -22,7 +23,7 @@ const GetImpactInsightsInputSchema = z.object({
 });
 export type GetImpactInsightsInput = z.infer<typeof GetImpactInsightsInputSchema>;
 
-const GetImpactInsightsOutputSchema = z.object({
+export const GetImpactInsightsOutputSchema = z.object({
   co2eq: z.number().describe('The estimated CO2-equivalent emissions (in kg).'),
   rawMaterials: z.object({
     gold: z.number().describe('The estimated amount of recoverable gold (in grams).'),
@@ -30,7 +31,6 @@ const GetImpactInsightsOutputSchema = z.object({
     rareEarths: z.number().describe('The estimated amount of recoverable rare earth materials (in grams).'),
   }).describe('The estimated amounts of recoverable raw materials.'),
   impactSummary: z.string().describe('A summary of the environmental impact of the device.'),
-  // Additional fields for enhanced insights
   comparisons: z.object({
     treeEquivalents: z.number().describe('Equivalent number of trees needed to absorb the CO2.'),
     carMiles: z.number().describe('Equivalent car miles driven.'),
@@ -45,55 +45,36 @@ const GetImpactInsightsOutputSchema = z.object({
 });
 export type GetImpactInsightsOutput = z.infer<typeof GetImpactInsightsOutputSchema>;
 
-export async function getImpactInsights(input: GetImpactInsightsInput): Promise<GetImpactInsightsOutput> {
-  try {
-    // Use real data calculation instead of AI generation
-    const result = await calculateDeviceImpact(input);
-    
-    return {
-      co2eq: result.co2eq,
-      rawMaterials: {
-        gold: result.rawMaterials.gold,
-        copper: result.rawMaterials.copper,
-        rareEarths: result.rawMaterials.rareEarths,
-      },
-      impactSummary: result.impactSummary,
-      comparisons: result.comparisons,
-      recommendations: result.recommendations,
-      deviceInfo: {
-        weight: result.deviceInfo.weight,
-        remainingLifespan: result.deviceInfo.remainingLifespan,
-      },
-      materialValueUSD: result.materialValueUSD,
-    };
-  } catch (error) {
-    // Fallback to AI if real data calculation fails
-    return getImpactInsightsFlow(input);
-  }
-}
 
 const prompt = ai.definePrompt({
-  name: 'getImpactInsightsPrompt',
-  input: {schema: GetImpactInsightsInputSchema},
-  output: {schema: GetImpactInsightsOutputSchema},
-  system: `You are an AI assistant that provides insights into the environmental impact of electronic devices.
+    name: 'getImpactInsightsPrompt',
+    input: { schema: z.object({
+        calculation: z.any(), // a bit of a hack, but we are passing the whole result
+        input: GetImpactInsightsInputSchema
+    })},
+    output: { schema: z.object({
+        impactSummary: z.string().describe("A concise (2-3 sentences) summary of the device's environmental impact, mentioning its footprint, condition, and recycling potential."),
+        recommendations: z.array(z.string()).describe("A list of 3-4 actionable recommendations for the user based on the device's condition and remaining lifespan.")
+    })},
+    prompt: `You are an e-waste sustainability expert. Based on the following impact calculation data, provide a concise summary and actionable recommendations for the user.
+    If the device model was not found in the database, mention that the calculation is a general estimate for the device category.
 
-  Your primary goal is to provide accurate data. You have a tool to look up e-waste data for specific device models.
+    Device Information:
+    - Type: {{{input.deviceType}}}
+    - Brand: {{{input.brand}}}
+    - Model: {{{input.model}}}
+    - Age: {{{input.ageMonths}}} months
+    - Condition: {{{input.condition}}}
 
-  1.  **Use the Tool:** If the user provides a brand and model, you MUST use the \`ewasteDataTool\` to find data for that device.
-  2.  **Analyze Tool Output:**
-      *   If the tool returns data, use that data to answer. The condition of the device ('good', 'fair', 'poor') and its age can slightly modify the CO2 and material values (e.g., a 'poor' condition device might have slightly lower recoverable materials, an older device has a larger relative footprint).
-      *   If the tool returns no data for the specific model, you MUST inform the user that specific data is not available. Then, provide a generic estimate based on the \`deviceType\`, age, and condition. Do NOT invent data or models.
-  3.  **Generate Summary:** Based on the data (either from the tool or a generic estimate), provide a concise \`impactSummary\`. If you are providing a generic estimate, you must state this clearly in the summary.
-  `,
-  prompt: `Please provide the environmental impact assessment for the following device:
+    Calculation Results:
+    - CO2 Equivalent: {{{calculation.co2eq}}} kg
+    - Remaining Lifespan: {{{calculation.deviceInfo.remainingLifespan}}} years
+    - Recoverable Gold: {{{calculation.rawMaterials.gold}}}g
+    - Recoverable Copper: {{{calculation.rawMaterials.copper}}}g
+    - Material Value: ${{{calculation.materialValueUSD}}}
 
-  Device Type: {{{deviceType}}}
-  {{#if brand}}Brand: {{{brand}}}{{/if}}
-  {{#if model}}Model: {{{model}}}{{/if}}
-  Age (months): {{{ageMonths}}}
-  Condition: {{{condition}}}
-  `,
+    Generate the impact summary and recommendations.
+    `
 });
 
 const getImpactInsightsFlow = ai.defineFlow(
@@ -102,8 +83,43 @@ const getImpactInsightsFlow = ai.defineFlow(
     inputSchema: GetImpactInsightsInputSchema,
     outputSchema: GetImpactInsightsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    let specificDeviceData;
+    if (input.brand && input.model) {
+      specificDeviceData = await ewasteDataTool({ brand: input.brand, model: input.model });
+    }
+
+    const calculationResult = await calculateDeviceImpact(input, specificDeviceData || undefined);
+
+    const { output } = await prompt({
+        calculation: calculationResult,
+        input: input
+    });
+    
+    if (!output) {
+        throw new Error("Failed to get summary and recommendations from AI model.");
+    }
+
+    return {
+      co2eq: calculationResult.co2eq,
+      rawMaterials: {
+        gold: calculationResult.rawMaterials.gold,
+        copper: calculationResult.rawMaterials.copper,
+        rareEarths: calculationResult.rawMaterials.rareEarths,
+      },
+      impactSummary: output.impactSummary,
+      comparisons: calculationResult.comparisons,
+      recommendations: output.recommendations,
+      deviceInfo: {
+        weight: calculationResult.deviceInfo.weight,
+        remainingLifespan: calculationResult.deviceInfo.remainingLifespan,
+      },
+      materialValueUSD: calculationResult.materialValueUSD,
+    };
   }
 );
+
+
+export async function getImpactInsights(input: GetImpactInsightsInput): Promise<GetImpactInsightsOutput> {
+    return getImpactInsightsFlow(input);
+}

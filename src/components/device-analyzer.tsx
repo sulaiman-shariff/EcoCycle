@@ -8,10 +8,10 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Camera, Image as ImageIcon, Zap, Leaf, DollarSign, Info } from 'lucide-react';
+import { Upload, Camera, Image as ImageIcon, Zap, Leaf, DollarSign, Info, Loader2 } from 'lucide-react';
 import { VisionAnalysisResult } from '@/lib/vision-api';
-import { saveDeviceAnalysis } from '@/lib/firebase/firestore';
 import { useAuth } from '@/lib/firebase/auth';
+import { analyzeDeviceAction } from '@/app/actions';
 
 interface DeviceAnalyzerProps {
   onAnalysisComplete?: (result: VisionAnalysisResult) => void;
@@ -35,13 +35,11 @@ export function DeviceAnalyzer({ onAnalysisComplete }: DeviceAnalyzerProps) {
       return;
     }
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select a valid image file');
       return;
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       setError('Image file size must be less than 10MB');
       return;
@@ -49,66 +47,45 @@ export function DeviceAnalyzer({ onAnalysisComplete }: DeviceAnalyzerProps) {
 
     setIsAnalyzing(true);
     setError(null);
+    setAnalysisResult(null);
     setUploadProgress(0);
 
     try {
-      // Create object URL for preview
-      const imageUrl = URL.createObjectURL(file);
-      setSelectedImage(imageUrl);
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadstart = () => {
+        setUploadProgress(30);
+      };
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 50) + 30;
+          setUploadProgress(percent);
+        }
+      };
+      reader.onloadend = async () => {
+        const base64ImageUrl = reader.result as string;
+        setSelectedImage(base64ImageUrl);
+        setUploadProgress(90);
 
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 100);
+        const response = await analyzeDeviceAction(base64ImageUrl, user.uid);
 
-      // Analyze the image using our API
-      const response = await fetch('/api/analyze-device', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ imageUrl }),
-      });
+        if (response.error || !response.result) {
+          throw new Error(response.error || 'Analysis failed to return a result.');
+        }
 
-      if (!response.ok) {
-        throw new Error('Failed to analyze image');
-      }
-
-      const result = await response.json();
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      setAnalysisResult(result);
-      onAnalysisComplete?.(result);
-
-      // Save analysis to Firestore
-      if (user.uid) {
-        await saveDeviceAnalysis({
-          userId: user.uid,
-          imageUrl: imageUrl,
-          analysisResult: result
-        });
-      }
-
-    } catch (err) {
+        setUploadProgress(100);
+        setAnalysisResult(response.result);
+        onAnalysisComplete?.(response.result);
+      };
+    } catch (err: any) {
       console.error('Analysis failed:', err);
-      setError('Failed to analyze image. Please try again.');
+      setError(err.message || 'Failed to analyze image. Please try again.');
     } finally {
       setIsAnalyzing(false);
-      setUploadProgress(0);
     }
   };
 
   const handleCameraCapture = () => {
-    // This would integrate with device camera
-    // For now, just trigger file input
     fileInputRef.current?.click();
   };
 
@@ -192,7 +169,7 @@ export function DeviceAnalyzer({ onAnalysisComplete }: DeviceAnalyzerProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Analyzing device...</span>
-                <span className="text-blue-600 font-medium">{uploadProgress}%</span>
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
               </div>
               <Progress value={uploadProgress} className="h-2" />
             </div>
@@ -397,4 +374,4 @@ export function DeviceAnalyzer({ onAnalysisComplete }: DeviceAnalyzerProps) {
       </Card>
     </div>
   );
-} 
+}
