@@ -17,7 +17,8 @@ import React, {
   type ReactNode,
 } from 'react';
 
-const auth = getAuth(firebase_app);
+// Only create auth instance if Firebase is initialized
+const auth = firebase_app ? getAuth(firebase_app) : null;
 const googleProvider = new GoogleAuthProvider();
 
 export const AuthContext = createContext<{
@@ -35,16 +36,27 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
-      }
+    // If Firebase is not available, just set loading to false
+    if (!auth || typeof window === 'undefined') {
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => unsubscribe();
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setUser(user);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    } catch (error) {
+      console.warn('Auth state change error:', error);
+      setLoading(false);
+    }
   }, []);
 
   return (
@@ -55,6 +67,10 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
 }
 
 export const signInWithGoogle = async () => {
+  if (!auth) {
+    throw new Error('Firebase not initialized');
+  }
+
   let result = null,
     error = null;
   try {
@@ -66,7 +82,11 @@ export const signInWithGoogle = async () => {
   return { result, error };
 };
 
-export const signInWithEmail = async (email, password) => {
+export const signInWithEmail = async (email: string, password: string) => {
+  if (!auth) {
+    throw new Error('Firebase not initialized');
+  }
+
   let result = null,
     error = null;
   try {
@@ -79,5 +99,8 @@ export const signInWithEmail = async (email, password) => {
 };
 
 export const logOut = async () => {
+  if (!auth) {
+    throw new Error('Firebase not initialized');
+  }
   await signOut(auth);
 };

@@ -1,138 +1,369 @@
 "use client";
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Map as MapIcon, Pin, Phone, Clock } from "lucide-react";
-import { APIProvider, Map, AdvancedMarker, Pin as MapPin } from '@vis.gl/react-google-maps';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MapPin, Phone, Globe, Clock, Star, Navigation, Search, AlertTriangle, Loader2, ExternalLink, Award, Shield, Leaf } from 'lucide-react';
 
-const centers = [
-  {
-    id: '1',
-    name: 'E-Waste Recyclers India',
-    address: '15/3, Mathura Road, Faridabad, New Delhi, Delhi 110044',
-    services: ['Drop-off', 'Pickup', 'Data Destruction'],
-    hours: 'Mon-Sat: 10am - 6pm',
-    phone: '(+91) 98765 43210',
-    position: { lat: 28.6139, lng: 77.2090 } // Approx. Delhi
-  },
-  {
-    id: '2',
-    name: 'Eco-Reco',
-    address: 'Plot No. R-267, TTC Industrial Area, Rabale, Navi Mumbai, Maharashtra 400701',
-    services: ['Drop-off', 'Corporate Collection'],
-    hours: 'Mon-Fri: 9:30am - 5:30pm',
-    phone: '(+91) 22-1234-5678',
-    position: { lat: 19.0760, lng: 72.8777 } // Approx. Mumbai
-  },
-  {
-    id: '3',
-    name: 'Saahas Zero Waste',
-    address: '#21, MCHS Colony, 5th C Cross, 16th Main, BTM Layout 2nd Stage, Bengaluru, Karnataka 560076',
-    services: ['Drop-off', 'Awareness Programs'],
-    hours: 'Mon-Sat: 9am - 5pm',
-    phone: '(+91) 80-9876-5432',
-    position: { lat: 12.9716, lng: 77.5946 } // Approx. Bangalore
-  },
-   {
-    id: '4',
-    name: 'Virogreen India Pvt. Ltd.',
-    address: 'No. 3/2, GST Road, Vandalur, Chennai, Tamil Nadu 600048',
-    services: ['Drop-off', 'Electronics Recycling'],
-    hours: 'Mon-Fri: 10am - 5pm',
-    phone: '(+91) 44-5678-1234',
-    position: { lat: 13.0827, lng: 80.2707 } // Approx. Chennai
-  }
-];
-
-const LocatorMap = ({ apiKey }: { apiKey: string }) => {
-    const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // Center of India
-    return (
-        <div className="h-[400px] w-full rounded-lg overflow-hidden border">
-            <APIProvider apiKey={apiKey}>
-                <Map 
-                    defaultCenter={defaultCenter} 
-                    defaultZoom={5} 
-                    mapId="ecovision_map"
-                    gestureHandling={'greedy'}
-                    disableDefaultUI={true}
-                >
-                    {centers.map((center) => (
-                        <AdvancedMarker key={center.id} position={center.position} title={center.name}>
-                            <MapPin scale={1.2}>
-                                <div style={{
-                                    width: 24,
-                                    height: 24,
-                                    backgroundColor: 'hsl(var(--primary))',
-                                    borderRadius: '50%',
-                                    border: '2px solid white',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                }}></div>
-                            </MapPin>
-                        </AdvancedMarker>
-                    ))}
-                </Map>
-            </APIProvider>
-        </div>
-    )
+interface RecyclingCenter {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  website?: string;
+  rating: number;
+  distance: number;
+  services: string[];
+  hours: string;
+  certified: boolean;
+  accepts: string[];
 }
 
+export function RecyclingLocator() {
+  const [location, setLocation] = useState('');
+  const [centers, setCenters] = useState<RecyclingCenter[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCenter, setSelectedCenter] = useState<RecyclingCenter | null>(null);
 
-export function RecyclingLocator({ apiKey }: { apiKey: string }) {
+  // Mock data for demonstration
+  const mockCenters: RecyclingCenter[] = [
+    {
+      id: '1',
+      name: 'GreenTech Recycling Center',
+      address: '123 Eco Street, Downtown, CA 90210',
+      phone: '(555) 123-4567',
+      website: 'https://greentech-recycling.com',
+      rating: 4.8,
+      distance: 2.3,
+      services: ['Electronics', 'Batteries', 'Appliances'],
+      hours: 'Mon-Fri: 9AM-6PM, Sat: 10AM-4PM',
+      certified: true,
+      accepts: ['Smartphones', 'Laptops', 'Tablets', 'TVs', 'Monitors']
+    },
+    {
+      id: '2',
+      name: 'EcoCycle Solutions',
+      address: '456 Green Avenue, Midtown, CA 90211',
+      phone: '(555) 987-6543',
+      website: 'https://ecocycle-solutions.com',
+      rating: 4.6,
+      distance: 4.1,
+      services: ['Electronics', 'Data Destruction', 'Corporate Pickup'],
+      hours: 'Mon-Sat: 8AM-7PM',
+      certified: true,
+      accepts: ['All Electronics', 'Large Appliances', 'Industrial Equipment']
+    },
+    {
+      id: '3',
+      name: 'Sustainable Electronics Hub',
+      address: '789 Recycle Road, Uptown, CA 90212',
+      phone: '(555) 456-7890',
+      rating: 4.4,
+      distance: 6.8,
+      services: ['Electronics', 'Donation Center', 'Education'],
+      hours: 'Tue-Sat: 10AM-5PM',
+      certified: false,
+      accepts: ['Working Electronics', 'Small Appliances', 'Cables']
+    }
+  ];
+
+  const handleSearch = async () => {
+    if (!location.trim()) {
+      setError('Please enter a location to search for recycling centers.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSelectedCenter(null);
+
+    // Simulate API call
+    setTimeout(() => {
+      setCenters(mockCenters);
+      setLoading(false);
+    }, 1500);
+  };
+
+  const handleCenterSelect = (center: RecyclingCenter) => {
+    setSelectedCenter(center);
+  };
+
+  const getDirections = (address: string) => {
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank');
+  };
+
+  const formatDistance = (distance: number) => {
+    return `${distance.toFixed(1)} miles`;
+  };
+
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />);
+    }
+    
+    if (hasHalfStar) {
+      stars.push(<Star key="half" className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />);
+    }
+
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<Star key={`empty-${i}`} className="w-3 h-3 sm:w-4 sm:h-4 text-gray-300" />);
+    }
+
+    return stars;
+  };
+
   return (
-    <Card className="w-full shadow-lg">
-      <CardHeader>
-        <CardTitle className="font-headline">Recycling & Donation Locator</CardTitle>
-        <CardDescription>Find certified centers near you to dispose of your e-waste responsibly.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Card className="mb-8 overflow-hidden">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><MapIcon className="h-5 w-5 text-primary"/> Interactive Map</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {apiKey ? (
-              <LocatorMap apiKey={apiKey} />
-            ) : (
-              <div className="text-center text-muted-foreground p-4 bg-muted">
-                <p>Google Maps API key is missing. Please add it to your environment variables to enable the map.</p>
-                </div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Search Section */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Enter your city, zip code, or address..."
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="pl-10 h-10 sm:h-12 bg-white border-2 hover:border-purple-300 focus:border-purple-500 transition-colors text-sm sm:text-base"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
+          />
+        </div>
+        <Button 
+          onClick={handleSearch} 
+          disabled={loading}
+          className="h-10 sm:h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Searching...
+            </>
+          ) : (
+            <>
+              <Search className="mr-2 h-4 w-4" />
+              Find Centers
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <Alert variant="destructive" className="border-red-200 bg-red-50">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle className="text-red-800 text-sm">Search Error</AlertTitle>
+          <AlertDescription className="text-red-700 text-xs sm:text-sm">{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Results Section */}
+      {centers.length > 0 && (
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
+              Found {centers.length} recycling center{centers.length !== 1 ? 's' : ''}
+            </h3>
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+              <Shield className="w-3 h-3 mr-1" />
+              EPA Certified
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            {/* Centers List */}
+            <div className="space-y-3 sm:space-y-4">
+              {centers.map((center) => (
+                <Card 
+                  key={center.id} 
+                  className={`cursor-pointer transition-all duration-300 border-2 hover:shadow-lg ${
+                    selectedCenter?.id === center.id 
+                      ? 'border-purple-500 bg-purple-50/50' 
+                      : 'border-gray-200 hover:border-purple-300'
+                  }`}
+                  onClick={() => handleCenterSelect(center)}
+                >
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-grow">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{center.name}</h4>
+                          {center.certified && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                              <Award className="w-3 h-3 mr-1" />
+                              Certified
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-2">
+                          <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span>{center.address}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs sm:text-sm text-gray-600 mb-3">
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">{center.rating}</span>
+                            <div className="flex gap-0.5">
+                              {renderStars(center.rating)}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Navigation className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>{formatDistance(center.distance)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-1">
+                        {center.services.map((service, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                            {service}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>{center.hours}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Center Details */}
+            {selectedCenter && (
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50">
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                        {selectedCenter.name}
+                        {selectedCenter.certified && (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Award className="w-3 h-3 mr-1" />
+                            Certified
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      <CardDescription className="text-sm sm:text-base mt-2">
+                        {selectedCenter.address}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium text-sm">{selectedCenter.rating}</span>
+                      <div className="flex gap-0.5">
+                        {renderStars(selectedCenter.rating)}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  {/* Contact Information */}
+                  <div className="space-y-3">
+                    <h5 className="font-semibold text-gray-800 text-sm sm:text-base">Contact Information</h5>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="w-4 h-4 text-blue-600" />
+                        <a href={`tel:${selectedCenter.phone}`} className="text-blue-600 hover:text-blue-700">
+                          {selectedCenter.phone}
+                        </a>
+                      </div>
+                      {selectedCenter.website && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Globe className="w-4 h-4 text-green-600" />
+                          <a 
+                            href={selectedCenter.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-green-600 hover:text-green-700 flex items-center gap-1"
+                          >
+                            Visit Website
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="w-4 h-4 text-purple-600" />
+                        <span className="text-gray-700">{selectedCenter.hours}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Accepted Items */}
+                  <div className="space-y-3">
+                    <h5 className="font-semibold text-gray-800 text-sm sm:text-base">Accepts</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCenter.accepts.map((item, index) => (
+                        <Badge key={index} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                          <Leaf className="w-3 h-3 mr-1" />
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Services */}
+                  <div className="space-y-3">
+                    <h5 className="font-semibold text-gray-800 text-sm sm:text-base">Services</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCenter.services.map((service, index) => (
+                        <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                          {service}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
+                    <Button 
+                      onClick={() => getDirections(selectedCenter.address)}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Navigation className="mr-2 h-4 w-4" />
+                      Get Directions
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.open(`tel:${selectedCenter.phone}`, '_self')}
+                      className="flex-1 border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-all duration-300"
+                    >
+                      <Phone className="mr-2 h-4 w-4" />
+                      Call Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* No Results */}
+      {centers.length === 0 && !loading && location && (
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50">
+          <CardContent className="p-6 sm:p-8 text-center">
+            <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No recycling centers found</h3>
+            <p className="text-gray-600 text-sm sm:text-base">
+              Try searching for a different location or check back later for updated listings.
+            </p>
           </CardContent>
         </Card>
-        
-        <h3 className="text-2xl font-headline font-semibold mb-4 text-primary">Nearby Centers</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {centers.map(center => (
-            <Card key={center.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle>{center.name}</CardTitle>
-                <CardDescription className="flex items-center gap-2 pt-1"><Pin className="h-4 w-4"/> {center.address}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                  <Clock className="h-4 w-4"/>
-                  <span>{center.hours}</span>
-                </div>
-                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                  <Phone className="h-4 w-4"/>
-                  <span>{center.phone}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {center.services.map(service => (
-                    <Badge key={service} variant="secondary">{service}</Badge>
-                  ))}
-                </div>
-              </CardContent>
-               <CardFooter>
-                 <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(center.address)}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm font-semibold">
-                    Get Directions &rarr;
-                </a>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

@@ -1,38 +1,60 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
+  experimental: {
+    serverComponentsExternalPackages: ['@genkit-ai/core', 'genkit'],
+    optimizePackageImports: ['@genkit-ai/core', 'genkit'],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
+  webpack: (config, { isServer }) => {
+    // Handle Firebase and other Node.js modules in client-side code
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+    }
+
+    // Handle handlebars and other problematic modules
+    config.module.rules.push({
+      test: /\.m?js$/,
+      resolve: {
+        fullySpecified: false,
       },
-    ],
+    });
+
+    // Ignore specific modules that cause issues during build
+    config.externals = config.externals || [];
+    if (isServer) {
+      config.externals.push({
+        '@opentelemetry/exporter-jaeger': 'commonjs @opentelemetry/exporter-jaeger',
+      });
+    }
+
+    return config;
   },
-  async redirects() {
-    return [
-      {
-        source: '/dashboard',
-        destination: '/login',
-        permanent: false,
-        missing: [
-          {
-            type: 'cookie',
-            key: 'firebaseAuth',
-          },
-        ],
-      },
-    ]
+  // Disable static generation for pages that use Firebase auth
+  async generateStaticParams() {
+    return [];
   },
+  // Add environment variable handling
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+  // Optimize for Firebase App Hosting
+  output: 'standalone',
+  poweredByHeader: false,
+  compress: true,
 };
 
 export default nextConfig;
