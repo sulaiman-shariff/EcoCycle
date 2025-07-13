@@ -65,7 +65,14 @@ const CONDITION_KEYWORDS = {
 
 export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalysisResult> => {
   try {
-    const imageRequest = { image: { source: { imageUri: imageUrl } } };
+    // The imageUrl is a base64 data URI. We need to extract the raw base64 data.
+    const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+
+    const imageRequest = {
+      image: {
+        content: base64Data,
+      },
+    };
 
     // Perform multiple analyses
     const [labelResult, textResult, objectResult] = await Promise.all([
@@ -316,5 +323,7 @@ const estimateRecyclingValue = (
 };
 
 export { vision };
+
+    
 
     
