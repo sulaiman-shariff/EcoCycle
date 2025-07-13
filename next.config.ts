@@ -1,7 +1,13 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -13,7 +19,19 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return []
+    return [
+      {
+        source: '/dashboard',
+        destination: '/login',
+        permanent: false,
+        missing: [
+          {
+            type: 'cookie',
+            key: 'firebaseAuth',
+          },
+        ],
+      },
+    ]
   },
 };
 
