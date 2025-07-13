@@ -3,11 +3,15 @@
  * @fileOverview A Genkit tool for looking up e-waste data from a mock database.
  * 
  * - ewasteDataTool: The tool definition for looking up device data.
+ * - EwasteDeviceDataSchema: Zod schema for the tool's output data.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { ewasteDB, EwasteDeviceDataSchema } from '@/data/ewaste-db';
+import { ewasteDB, EwasteDeviceDataSchema as EwasteDbSchema } from '@/data/ewaste-db';
+
+// Export the Zod schema so other modules can use it for type validation.
+export const EwasteDeviceDataSchema = EwasteDbSchema;
 
 export const ewasteDataTool = ai.defineTool(
   {

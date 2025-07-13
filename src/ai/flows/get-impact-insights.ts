@@ -10,8 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { calculateDeviceImpact, type ImpactCalculationResult, type ImpactCalculationInput } from '@/lib/impact-calculator';
-import { ewasteDataTool } from '@/ai/tools/ewaste-data-tool';
+import { calculateDeviceImpact, type ImpactCalculationResult } from '@/lib/impact-calculator';
+import { ewasteDataTool, EwasteDeviceDataSchema } from '@/ai/tools/ewaste-data-tool';
 
 export const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
@@ -45,38 +45,6 @@ export const GetImpactInsightsOutputSchema = z.object({
 });
 export type GetImpactInsightsOutput = z.infer<typeof GetImpactInsightsOutputSchema>;
 
-
-const prompt = ai.definePrompt({
-    name: 'getImpactInsightsPrompt',
-    input: { schema: z.object({
-        calculation: z.any(), // a bit of a hack, but we are passing the whole result
-        input: GetImpactInsightsInputSchema
-    })},
-    output: { schema: z.object({
-        impactSummary: z.string().describe("A concise (2-3 sentences) summary of the device's environmental impact, mentioning its footprint, condition, and recycling potential."),
-        recommendations: z.array(z.string()).describe("A list of 3-4 actionable recommendations for the user based on the device's condition and remaining lifespan.")
-    })},
-    prompt: `You are an e-waste sustainability expert. Based on the following impact calculation data, provide a concise summary and actionable recommendations for the user.
-    If the device model was not found in the database, mention that the calculation is a general estimate for the device category.
-
-    Device Information:
-    - Type: {{{input.deviceType}}}
-    - Brand: {{{input.brand}}}
-    - Model: {{{input.model}}}
-    - Age: {{{input.ageMonths}}} months
-    - Condition: {{{input.condition}}}
-
-    Calculation Results:
-    - CO2 Equivalent: {{{calculation.co2eq}}} kg
-    - Remaining Lifespan: {{{calculation.deviceInfo.remainingLifespan}}} years
-    - Recoverable Gold: {{{calculation.rawMaterials.gold}}}g
-    - Recoverable Copper: {{{calculation.rawMaterials.copper}}}g
-    - Material Value: ${{{calculation.materialValueUSD}}}
-
-    Generate the impact summary and recommendations.
-    `
-});
-
 const getImpactInsightsFlow = ai.defineFlow(
   {
     name: 'getImpactInsightsFlow',
@@ -84,37 +52,56 @@ const getImpactInsightsFlow = ai.defineFlow(
     outputSchema: GetImpactInsightsOutputSchema,
   },
   async (input) => {
-    let specificDeviceData;
-    if (input.brand && input.model) {
-      specificDeviceData = await ewasteDataTool({ brand: input.brand, model: input.model });
-    }
+    // 1. Let the AI generate insights and use the tool if necessary.
+    const llmResponse = await ai.generate({
+      prompt: `
+        You are an e-waste sustainability expert. 
+        Your goal is to provide a concise impact summary and actionable recommendations for the user based on their device.
+        
+        Device Information:
+        - Type: ${input.deviceType}
+        - Brand: ${input.brand || 'Not provided'}
+        - Model: ${input.model || 'Not provided'}
+        - Age: ${input.ageMonths} months
+        - Condition: ${input.condition}
 
-    const calculationResult = await calculateDeviceImpact(input, specificDeviceData || undefined);
-
-    const { output } = await prompt({
-        calculation: calculationResult,
-        input: input
+        Instructions:
+        1. If the user provides a specific brand and model, you MUST use the ewasteDataTool to look up its data.
+        2. Based on all the information, generate a concise impact summary (2-3 sentences).
+        3. Provide 3-4 actionable recommendations for the user based on the device's condition and age.
+        4. If the tool does not find a specific device, mention in your summary that the calculation is a general estimate for the device category.
+      `,
+      tools: [ewasteDataTool],
+      model: 'googleai/gemini-1.5-flash',
+      output: {
+        schema: z.object({
+          impactSummary: z.string().describe("A concise (2-3 sentences) summary of the device's environmental impact, mentioning its footprint, condition, and recycling potential."),
+          recommendations: z.array(z.string()).describe("A list of 3-4 actionable recommendations for the user based on the device's condition and remaining lifespan.")
+        })
+      }
     });
-    
-    if (!output) {
-        throw new Error("Failed to get summary and recommendations from AI model.");
-    }
 
+    const toolOutput = llmResponse.toolRequest?.tool?.ewasteDataTool;
+    const specificDeviceData = toolOutput ? EwasteDeviceDataSchema.parse(toolOutput) : undefined;
+    
+    // 2. Perform the definitive data calculation using the (optional) specific data.
+    const calculationResult = await calculateDeviceImpact(input, specificDeviceData);
+
+    const aiOutput = llmResponse.output;
+    if (!aiOutput) {
+      throw new Error("Failed to get summary and recommendations from AI model.");
+    }
+    
+    // 3. Combine calculation results and AI-generated text into the final output.
     return {
-      co2eq: calculationResult.co2eq,
+      ...calculationResult,
       rawMaterials: {
         gold: calculationResult.rawMaterials.gold,
         copper: calculationResult.rawMaterials.copper,
         rareEarths: calculationResult.rawMaterials.rareEarths,
       },
-      impactSummary: output.impactSummary,
-      comparisons: calculationResult.comparisons,
-      recommendations: output.recommendations,
-      deviceInfo: {
-        weight: calculationResult.deviceInfo.weight,
-        remainingLifespan: calculationResult.deviceInfo.remainingLifespan,
-      },
-      materialValueUSD: calculationResult.materialValueUSD,
+      impactSummary: aiOutput.impactSummary,
+      recommendations: aiOutput.recommendations,
     };
   }
 );
