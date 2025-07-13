@@ -9,50 +9,50 @@ import { APIProvider, Map, AdvancedMarker, Pin as MapPin } from '@vis.gl/react-g
 const centers = [
   {
     id: '1',
-    name: 'GreenCycle Hub',
-    address: '123 Eco Lane, Greenfield, GA 12345',
+    name: 'E-Waste Recyclers India',
+    address: '15/3, Mathura Road, Faridabad, New Delhi, Delhi 110044',
     services: ['Drop-off', 'Pickup', 'Data Destruction'],
-    hours: 'Mon-Fri: 9am - 5pm',
-    phone: '(555) 123-4567',
-    position: { lat: 33.7490, lng: -84.3880 } // Approx. Atlanta, GA
+    hours: 'Mon-Sat: 10am - 6pm',
+    phone: '(+91) 98765 43210',
+    position: { lat: 28.6139, lng: 77.2090 } // Approx. Delhi
   },
   {
     id: '2',
-    name: 'Re-Tech Solutions',
-    address: '456 Circuit Ave, Techville, CA 98765',
-    services: ['Drop-off', 'Repair'],
-    hours: 'Tue-Sat: 10am - 6pm',
-    phone: '(555) 987-6543',
-    position: { lat: 34.0522, lng: -118.2437 } // Approx. Los Angeles, CA
+    name: 'Eco-Reco',
+    address: 'Plot No. R-267, TTC Industrial Area, Rabale, Navi Mumbai, Maharashtra 400701',
+    services: ['Drop-off', 'Corporate Collection'],
+    hours: 'Mon-Fri: 9:30am - 5:30pm',
+    phone: '(+91) 22-1234-5678',
+    position: { lat: 19.0760, lng: 72.8777 } // Approx. Mumbai
   },
   {
     id: '3',
-    name: 'EarthSavers Electronics',
-    address: '789 Planet St, Metro City, NY 54321',
-    services: ['Drop-off', 'Pickup', 'Donation'],
-    hours: 'Mon-Sat: 8am - 4pm',
-    phone: '(555) 246-8135',
-    position: { lat: 40.7128, lng: -74.0060 } // Approx. New York, NY
+    name: 'Saahas Zero Waste',
+    address: '#21, MCHS Colony, 5th C Cross, 16th Main, BTM Layout 2nd Stage, Bengaluru, Karnataka 560076',
+    services: ['Drop-off', 'Awareness Programs'],
+    hours: 'Mon-Sat: 9am - 5pm',
+    phone: '(+91) 80-9876-5432',
+    position: { lat: 12.9716, lng: 77.5946 } // Approx. Bangalore
   },
    {
     id: '4',
-    name: 'Community E-Waste Drive',
-    address: '101 Civic Center Plaza, Downtown',
-    services: ['Drop-off', 'Mobile Phones'],
-    hours: 'Weekends: 10am - 2pm',
-    phone: '(555) 369-1472',
-    position: { lat: 41.8781, lng: -87.6298 } // Approx. Chicago, IL
+    name: 'Virogreen India Pvt. Ltd.',
+    address: 'No. 3/2, GST Road, Vandalur, Chennai, Tamil Nadu 600048',
+    services: ['Drop-off', 'Electronics Recycling'],
+    hours: 'Mon-Fri: 10am - 5pm',
+    phone: '(+91) 44-5678-1234',
+    position: { lat: 13.0827, lng: 80.2707 } // Approx. Chennai
   }
 ];
 
 const LocatorMap = ({ apiKey }: { apiKey: string }) => {
-    const defaultCenter = { lat: 39.8283, lng: -98.5795 }; // Center of US
+    const defaultCenter = { lat: 20.5937, lng: 78.9629 }; // Center of India
     return (
         <div className="h-[400px] w-full rounded-lg overflow-hidden border">
             <APIProvider apiKey={apiKey}>
                 <Map 
                     defaultCenter={defaultCenter} 
-                    defaultZoom={4} 
+                    defaultZoom={5} 
                     mapId="ecovision_map"
                     gestureHandling={'greedy'}
                     disableDefaultUI={true}
