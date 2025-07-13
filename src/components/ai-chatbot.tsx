@@ -27,16 +27,52 @@ type Message = {
   content: string;
 };
 
+// Helper to render markdown-like AI responses
+function renderAIContent(content: string) {
+  // Split by lines
+  const lines = content.split(/\r?\n/);
+  return (
+    <div className="space-y-1">
+      {lines.map((line, idx) => {
+        // Heading (e.g. # Title)
+        if (/^#\s+/.test(line)) {
+          return <div key={idx} className="font-bold text-base text-blue-700 mt-2">{line.replace(/^#\s+/, '')}</div>;
+        }
+        // Bullet point (e.g. *, -, or •)
+        if (/^(\*|-|•)\s+/.test(line)) {
+          // Remove bullet and render the rest with bold support
+          const bulletContent = line.replace(/^(\*|-|•)\s+/, '');
+          // Replace **bold** with <strong>
+          const html = bulletContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          return (
+            <div key={idx} className="pl-4 flex items-start gap-2">
+              <span className="text-blue-600">•</span>
+              <span dangerouslySetInnerHTML={{__html: html}} />
+            </div>
+          );
+        }
+        // Bold (e.g. **text**)
+        if (/\*\*(.*?)\*\*/.test(line)) {
+          return <div key={idx} dangerouslySetInnerHTML={{__html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}} />;
+        }
+        // Plain text
+        return <div key={idx}>{line}</div>;
+      })}
+    </div>
+  );
+}
+
 export function AiChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     { 
       role: "assistant", 
-      content: "Hello! I'm your EcoCycle AI assistant. I'm here to help you with all things e-waste, recycling, and sustainability. Ask me anything - from how to dispose of old electronics to understanding environmental impact!" 
+      content: "Hello! I'm your EcoCycle AI assistant, specialised for India 🇮🇳. I can help you with all things e-waste, recycling, and sustainability in India. Ask me anything about Indian e-waste rules, CPCB/MoEFCC guidelines, or how to recycle electronics in your city!" 
     },
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof chatSchema>>({
     resolver: zodResolver(chatSchema),
@@ -50,8 +86,13 @@ export function AiChatbot() {
     setError(null);
     const userMessage: Message = { role: "user", content: values.question };
     setMessages((prev) => [...prev, userMessage]);
+    form.setValue('question', ''); // Clear input immediately
 
-    const response = await askAiAction({ question: values.question });
+    // Always send Indian context to the AI model
+    const response = await askAiAction({ 
+      question: values.question, 
+      systemPrompt: `You are an expert e-waste and recycling assistant for India. Always answer with Indian context, laws, CPCB/MoEFCC guidelines, and use INR and metric units. If asked about recycling locations, prioritise Indian cities and government-authorised centres. Format your response with clear headings, bullet points, and bold for important terms, but do not use raw markdown symbols like * or #.`
+    });
 
     if (response.error) {
       setError(response.error);
@@ -61,17 +102,12 @@ export function AiChatbot() {
       const assistantMessage: Message = { role: "assistant", content: response.result.answer };
       setMessages((prev) => [...prev, assistantMessage]);
     }
-
-    form.reset();
     setLoading(false);
   }
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
+    if (endOfMessagesRef.current) {
+      endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
@@ -150,7 +186,7 @@ export function AiChatbot() {
                       ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200' 
                       : 'bg-gradient-to-br from-green-500 to-blue-600 text-white'
                   )}>
-                    <p className="leading-relaxed">{message.content}</p>
+                    {message.role === 'assistant' ? renderAIContent(message.content) : <p className="leading-relaxed">{message.content}</p>}
                   </div>
                   {message.role === "user" && (
                     <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-200">
@@ -176,6 +212,7 @@ export function AiChatbot() {
                   </div>
                 </div>
               )}
+              <div ref={endOfMessagesRef} />
             </div>
           </ScrollArea>
           
@@ -217,9 +254,9 @@ export function AiChatbot() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault();
-                              if(form.formState.isValid) {
-                                form.handleSubmit(onSubmit)();
-                              }
+                             if(form.getValues('question').trim().length >= 5) {
+                               form.handleSubmit(onSubmit)();
+                             }
                             }
                           }}
                         />

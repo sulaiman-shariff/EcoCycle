@@ -6,20 +6,70 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MapPin, Phone, Globe, Clock, Star, Navigation, Search, AlertTriangle, Loader2, ExternalLink, Award, Shield, Leaf } from 'lucide-react';
+import { Loader2, MapPin, Search, AlertTriangle, Navigation, Star, Clock, Award, Shield, Leaf } from 'lucide-react';
 
 interface RecyclingCenter {
   id: string;
   name: string;
   address: string;
-  phone: string;
-  website?: string;
-  rating: number;
-  distance: number;
-  services: string[];
-  hours: string;
-  certified: boolean;
-  accepts: string[];
+  rating?: number;
+  distance?: number;
+  placeId?: string;
+  types?: string[];
+  openingHours?: string;
+  location?: { lat: number; lng: number };
+}
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+// Fallback data for testing when API key is not available
+const FALLBACK_CENTERS: RecyclingCenter[] = [
+  {
+    id: '1',
+    name: 'E-Waste Recyclers Bangalore',
+    address: 'Electronic City, Bangalore, Karnataka 560100',
+    rating: 4.2,
+    distance: 2.5,
+    types: ['electronics_recycling', 'e-waste_center'],
+    openingHours: 'Mon-Fri: 9:00 AM - 6:00 PM',
+    location: { lat: 12.9716, lng: 77.5946 }
+  },
+  {
+    id: '2',
+    name: 'Green Earth Recycling Solutions',
+    address: 'Whitefield, Bangalore, Karnataka 560066',
+    rating: 4.5,
+    distance: 5.8,
+    types: ['electronics_recycling', 'certified_recycler'],
+    openingHours: 'Mon-Sat: 8:00 AM - 7:00 PM',
+    location: { lat: 12.9716, lng: 77.5946 }
+  },
+  {
+    id: '3',
+    name: 'TechCycle India',
+    address: 'Koramangala, Bangalore, Karnataka 560034',
+    rating: 4.0,
+    distance: 3.2,
+    types: ['electronics_recycling', 'data_destruction'],
+    openingHours: 'Mon-Fri: 10:00 AM - 5:00 PM',
+    location: { lat: 12.9716, lng: 77.5946 }
+  }
+];
+
+async function searchRecyclingCenters(location: string): Promise<RecyclingCenter[]> {
+  try {
+    const response = await fetch(`/api/recycling-centers?location=${encodeURIComponent(location)}`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch recycling centers');
+    }
+    
+    return data.centers || [];
+  } catch (error) {
+    console.error('API error:', error);
+    throw error;
+  }
 }
 
 export function RecyclingLocator() {
@@ -28,99 +78,92 @@ export function RecyclingLocator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCenter, setSelectedCenter] = useState<RecyclingCenter | null>(null);
-
-  // Mock data for demonstration
-  const mockCenters: RecyclingCenter[] = [
-    {
-      id: '1',
-      name: 'GreenTech Recycling Center',
-      address: '123 Eco Street, Downtown, CA 90210',
-      phone: '(555) 123-4567',
-      website: 'https://greentech-recycling.com',
-      rating: 4.8,
-      distance: 2.3,
-      services: ['Electronics', 'Batteries', 'Appliances'],
-      hours: 'Mon-Fri: 9AM-6PM, Sat: 10AM-4PM',
-      certified: true,
-      accepts: ['Smartphones', 'Laptops', 'Tablets', 'TVs', 'Monitors']
-    },
-    {
-      id: '2',
-      name: 'EcoCycle Solutions',
-      address: '456 Green Avenue, Midtown, CA 90211',
-      phone: '(555) 987-6543',
-      website: 'https://ecocycle-solutions.com',
-      rating: 4.6,
-      distance: 4.1,
-      services: ['Electronics', 'Data Destruction', 'Corporate Pickup'],
-      hours: 'Mon-Sat: 8AM-7PM',
-      certified: true,
-      accepts: ['All Electronics', 'Large Appliances', 'Industrial Equipment']
-    },
-    {
-      id: '3',
-      name: 'Sustainable Electronics Hub',
-      address: '789 Recycle Road, Uptown, CA 90212',
-      phone: '(555) 456-7890',
-      rating: 4.4,
-      distance: 6.8,
-      services: ['Electronics', 'Donation Center', 'Education'],
-      hours: 'Tue-Sat: 10AM-5PM',
-      certified: false,
-      accepts: ['Working Electronics', 'Small Appliances', 'Cables']
-    }
-  ];
+  const [usingFallback, setUsingFallback] = useState(false);
 
   const handleSearch = async () => {
     if (!location.trim()) {
       setError('Please enter a location to search for recycling centers.');
       return;
     }
-
     setLoading(true);
     setError(null);
     setSelectedCenter(null);
-
-    // Simulate API call
-    setTimeout(() => {
-      setCenters(mockCenters);
-      setLoading(false);
-    }, 1500);
+    setCenters([]);
+    setUsingFallback(false);
+    
+    try {
+      const results = await searchRecyclingCenters(location);
+      
+      if (results.length === 0) {
+        setError('No recycling centers found near this location. Try a different area.');
+      } else {
+        setCenters(results);
+      }
+    } catch (e: any) {
+      console.error('Search error:', e);
+      setError(`Failed to fetch recycling centers: ${e.message || 'Please try again later.'}`);
+    }
+    setLoading(false);
   };
 
   const handleCenterSelect = (center: RecyclingCenter) => {
     setSelectedCenter(center);
   };
 
-  const getDirections = (address: string) => {
-    const encodedAddress = encodeURIComponent(address);
-    window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank');
+  const getDirections = (center: RecyclingCenter) => {
+    if (center.location) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${center.location.lat},${center.location.lng}`, '_blank');
+    } else if (center.address) {
+      const encodedAddress = encodeURIComponent(center.address);
+      window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank');
+    }
   };
 
-  const formatDistance = (distance: number) => {
-    return `${distance.toFixed(1)} miles`;
+  const formatDistance = (distance?: number) => {
+    if (!distance) return '';
+    return `${distance.toFixed(1)} km`;
   };
 
-  const renderStars = (rating: number) => {
+  const renderStars = (rating?: number) => {
+    if (!rating) return null;
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
-
     for (let i = 0; i < fullStars; i++) {
       stars.push(<Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />);
     }
-    
     if (hasHalfStar) {
       stars.push(<Star key="half" className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />);
     }
-
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
       stars.push(<Star key={`empty-${i}`} className="w-3 h-3 sm:w-4 sm:h-4 text-gray-300" />);
     }
-
     return stars;
   };
+
+  // Optionally, use geolocation on mount
+  useEffect(() => {
+    if (navigator.geolocation && !location) {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        setLoading(true);
+        setError(null);
+        try {
+          const { latitude, longitude } = pos.coords;
+          // Use reverse geocoding to get location name
+          const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`);
+          const data = await response.json();
+          const locationName = data.results?.[0]?.formatted_address || `${latitude}, ${longitude}`;
+          
+          const results = await searchRecyclingCenters(locationName);
+          setCenters(results);
+        } catch (e) {
+          setError('Failed to fetch recycling centers for your location.');
+        }
+        setLoading(false);
+      });
+    }
+  }, []);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -159,6 +202,8 @@ export function RecyclingLocator() {
         </Button>
       </div>
 
+
+
       {/* Error Display */}
       {error && (
         <Alert variant="destructive" className="border-red-200 bg-red-50">
@@ -175,10 +220,12 @@ export function RecyclingLocator() {
             <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
               Found {centers.length} recycling center{centers.length !== 1 ? 's' : ''}
             </h3>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-              <Shield className="w-3 h-3 mr-1" />
-              EPA Certified
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                <Shield className="w-3 h-3 mr-1" />
+                EPA Certified
+              </Badge>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -199,10 +246,10 @@ export function RecyclingLocator() {
                       <div className="flex-grow">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{center.name}</h4>
-                          {center.certified && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                              <Award className="w-3 h-3 mr-1" />
-                              Certified
+                          {center.rating && (
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
+                              <Star className="w-3 h-3 mr-1" />
+                              {center.rating.toFixed(1)}
                             </Badge>
                           )}
                         </div>
@@ -227,15 +274,15 @@ export function RecyclingLocator() {
                     
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-1">
-                        {center.services.map((service, index) => (
+                        {center.types?.map((type, index) => (
                           <Badge key={index} variant="secondary" className="text-xs bg-blue-100 text-blue-700">
-                            {service}
+                            {type}
                           </Badge>
                         ))}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-600">
                         <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>{center.hours}</span>
+                        <span>{center.openingHours}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -251,10 +298,10 @@ export function RecyclingLocator() {
                     <div>
                       <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
                         {selectedCenter.name}
-                        {selectedCenter.certified && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                            <Award className="w-3 h-3 mr-1" />
-                            Certified
+                        {selectedCenter.rating && (
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            <Star className="w-3 h-3 mr-1" />
+                            {selectedCenter.rating.toFixed(1)}
                           </Badge>
                         )}
                       </CardTitle>
@@ -276,28 +323,20 @@ export function RecyclingLocator() {
                     <h5 className="font-semibold text-gray-800 text-sm sm:text-base">Contact Information</h5>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
-                        <Phone className="w-4 h-4 text-blue-600" />
-                        <a href={`tel:${selectedCenter.phone}`} className="text-blue-600 hover:text-blue-700">
-                          {selectedCenter.phone}
+                        <Navigation className="w-4 h-4 text-blue-600" />
+                        <a 
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${selectedCenter.location?.lat},${selectedCenter.location?.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                        >
+                          Get Directions
+                          <Navigation className="w-3 h-3" />
                         </a>
                       </div>
-                      {selectedCenter.website && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Globe className="w-4 h-4 text-green-600" />
-                          <a 
-                            href={selectedCenter.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-green-600 hover:text-green-700 flex items-center gap-1"
-                          >
-                            Visit Website
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
-                      )}
                       <div className="flex items-center gap-2 text-sm">
                         <Clock className="w-4 h-4 text-purple-600" />
-                        <span className="text-gray-700">{selectedCenter.hours}</span>
+                        <span className="text-gray-700">{selectedCenter.openingHours}</span>
                       </div>
                     </div>
                   </div>
@@ -306,12 +345,18 @@ export function RecyclingLocator() {
                   <div className="space-y-3">
                     <h5 className="font-semibold text-gray-800 text-sm sm:text-base">Accepts</h5>
                     <div className="flex flex-wrap gap-2">
-                      {selectedCenter.accepts.map((item, index) => (
-                        <Badge key={index} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                          <Leaf className="w-3 h-3 mr-1" />
-                          {item}
-                        </Badge>
-                      ))}
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                        <Leaf className="w-3 h-3 mr-1" />
+                        Electronics
+                      </Badge>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                        <Leaf className="w-3 h-3 mr-1" />
+                        Batteries
+                      </Badge>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                        <Leaf className="w-3 h-3 mr-1" />
+                        Appliances
+                      </Badge>
                     </div>
                   </div>
 
@@ -319,30 +364,26 @@ export function RecyclingLocator() {
                   <div className="space-y-3">
                     <h5 className="font-semibold text-gray-800 text-sm sm:text-base">Services</h5>
                     <div className="flex flex-wrap gap-2">
-                      {selectedCenter.services.map((service, index) => (
-                        <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
-                          {service}
-                        </Badge>
-                      ))}
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                        Data Destruction
+                      </Badge>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                        Pickup Service
+                      </Badge>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                        Certification
+                      </Badge>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                     <Button 
-                      onClick={() => getDirections(selectedCenter.address)}
+                      onClick={() => getDirections(selectedCenter)}
                       className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                     >
                       <Navigation className="mr-2 h-4 w-4" />
                       Get Directions
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.open(`tel:${selectedCenter.phone}`, '_self')}
-                      className="flex-1 border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-all duration-300"
-                    >
-                      <Phone className="mr-2 h-4 w-4" />
-                      Call Now
                     </Button>
                   </div>
                 </CardContent>

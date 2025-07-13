@@ -73,16 +73,16 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
-        <div className="container flex h-14 sm:h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="w-full flex h-14 sm:h-16 items-center justify-between px-4 md:px-6">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
             <div className="relative">
-              <Leaf className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
+              <Leaf className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 group-hover:text-green-700 transition-colors" />
               <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
             </div>
             <span className="text-xl sm:text-2xl font-headline bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
               EcoCycle
             </span>
-          </div>
+          </Link>
           
           <div className="flex items-center gap-2 sm:gap-4">
             <Badge variant="secondary" className="hidden sm:flex">
@@ -100,7 +100,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="container px-4 md:px-6 py-6 sm:py-8">
+      <div className="w-full px-4 md:px-6 py-6 sm:py-8">
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                 Welcome back!
               </h1>
               <p className="text-gray-600 mt-2 text-sm sm:text-base">
-                Ready to make a difference? Let's calculate your environmental impact.
+                Ready to make a difference for India? Let's calculate your environmental impact as per Indian e-waste rules.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-green-600">Devices Analyzed</p>
+                  <p className="text-xs sm:text-sm font-medium text-green-600">Devices Analysed (India)</p>
                   <p className="text-xl sm:text-2xl font-bold text-green-800">8+</p>
                 </div>
                 <Calculator className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
@@ -141,7 +141,7 @@ export default function DashboardPage() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-blue-600">EPA Compliant</p>
+                  <p className="text-xs sm:text-sm font-medium text-blue-600">CPCB/MoEFCC Compliant</p>
                   <p className="text-xl sm:text-2xl font-bold text-blue-800">100%</p>
                 </div>
                 <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
@@ -153,7 +153,7 @@ export default function DashboardPage() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-purple-600">AI Assistant</p>
+                  <p className="text-xs sm:text-sm font-medium text-purple-600">AI Assistant (India)</p>
                   <p className="text-xl sm:text-2xl font-bold text-purple-800">24/7</p>
                 </div>
                 <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
@@ -215,7 +215,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4 sm:mb-6">
                     <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Environmental Impact Calculator</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Environmental Impact Calculator (India)</h2>
                   </div>
                   <ImpactCalculator />
                 </div>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4 sm:mb-6">
                     <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">AI-Powered Assistant</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">AI-Powered Assistant (India)</h2>
                   </div>
                   <AiChatbot />
                 </div>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4 sm:mb-6">
                     <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Recycling Center Locator</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Recycling Centre Locator (India)</h2>
                   </div>
                   <LocatorPage />
                 </div>
@@ -245,7 +245,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4 sm:mb-6">
                     <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Device Image Analyzer</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Device Image Analyser (India)</h2>
                   </div>
                   <DeviceAnalyzer />
                 </div>

@@ -48,7 +48,7 @@ export default function LocatorPage() {
                 <ol className="text-sm text-blue-800 space-y-1">
                   <li>1. Get a Google Maps API key from Google Cloud Console</li>
                   <li>2. Create a <code className="bg-blue-100 px-1 rounded">.env.local</code> file</li>
-                  <li>3. Add: <code className="bg-blue-100 px-1 rounded">GOOGLE_MAPS_API_KEY=your_key_here</code></li>
+                  <li>3. Add: <code className="bg-blue-100 px-1 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key_here</code></li>
                   <li>4. Restart your development server</li>
                 </ol>
               </div>
