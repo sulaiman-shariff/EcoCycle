@@ -46,7 +46,7 @@ const ewasteDataTool = ai.defineTool(
 );
 
 
-export const GetImpactInsightsInputSchema = z.object({
+const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
   brand: z.string().optional().describe('The brand of the device (e.g., Apple, Samsung).'),
   model: z.string().optional().describe('The model of the device (e.g., iPhone 14, Galaxy S23).'),
@@ -56,7 +56,7 @@ export const GetImpactInsightsInputSchema = z.object({
 });
 export type GetImpactInsightsInput = z.infer<typeof GetImpactInsightsInputSchema>;
 
-export const GetImpactInsightsOutputSchema = z.object({
+const GetImpactInsightsOutputSchema = z.object({
   co2eq: z.number().describe('The estimated CO2-equivalent emissions (in kg).'),
   rawMaterials: z.object({
     gold: z.number().describe('The estimated amount of recoverable gold (in grams).'),
