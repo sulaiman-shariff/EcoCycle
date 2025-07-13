@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { signInWithGoogle, signInWithEmail } from '@/lib/firebase/auth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -47,7 +47,11 @@ export default function LoginPage() {
       await signInWithEmail(values.email, values.password);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      if (err.code === 'auth/invalid-credential') {
+        setError('Invalid credentials. If you are a new user, please sign up.');
+      } else {
+        setError(err.message || 'An unexpected error occurred.');
+      }
     } finally {
         setLoading(false);
     }
@@ -210,6 +214,14 @@ export default function LoginPage() {
               </p>
             </div>
           </CardContent>
+          <CardFooter className="flex justify-center text-sm">
+            <p className="text-muted-foreground">
+                Don't have an account?{' '}
+                <Link href="/signup" className="font-semibold text-primary hover:underline">
+                    Sign up
+                </Link>
+            </p>
+          </CardFooter>
         </Card>
 
         {/* Footer */}

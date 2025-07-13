@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['@genkit-ai/core', 'genkit'],
   experimental: {
+    serverComponentsExternalPackages: ['@genkit-ai/core', 'genkit'],
     optimizePackageImports: ['@genkit-ai/core', 'genkit'],
   },
   webpack: (config, { isServer }) => {
@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   // Disable static generation for pages that use Firebase auth
-  generateStaticParams: async () => {
+  async generateStaticParams() {
     return [];
   },
   // Add environment variable handling
