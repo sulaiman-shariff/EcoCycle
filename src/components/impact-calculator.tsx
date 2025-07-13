@@ -21,6 +21,8 @@ import { Loader2, Zap, Mountain, Gauge } from "lucide-react";
 
 const formSchema = z.object({
   deviceType: z.string({ required_error: "Please select a device type." }),
+  brand: z.string().optional(),
+  model: z.string().optional(),
   ageMonths: z.coerce.number().min(0, "Age cannot be negative.").max(240, "Age seems too high."),
   condition: z.enum(["good", "fair", "poor"], { required_error: "Please select the device's condition." }),
 });
@@ -36,6 +38,8 @@ export function ImpactCalculator() {
       ageMonths: 12,
       deviceType: "smartphone",
       condition: "fair",
+      brand: "",
+      model: "",
     },
   });
 
@@ -93,7 +97,7 @@ export function ImpactCalculator() {
                   </FormItem>
                 )}
               />
-              <FormField
+               <FormField
                 control={form.control}
                 name="ageMonths"
                 render={({ field }) => (
@@ -101,6 +105,32 @@ export function ImpactCalculator() {
                     <FormLabel>Age (in months)</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="e.g., 24" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="brand"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Apple, Samsung" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Model (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., iPhone 14, Galaxy S23" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

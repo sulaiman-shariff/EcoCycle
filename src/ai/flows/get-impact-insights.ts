@@ -13,6 +13,8 @@ import {z} from 'genkit';
 
 const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
+  brand: z.string().optional().describe('The brand of the device (e.g., Apple, Samsung).'),
+  model: z.string().optional().describe('The model of the device (e.g., iPhone 14, Galaxy S23).'),
   ageMonths: z.number().describe('The age of the device in months.'),
   condition: z.enum(['good', 'fair', 'poor']).describe('The condition of the device.'),
 });
@@ -43,9 +45,12 @@ const prompt = ai.definePrompt({
   Also, provide a summary of the environmental impact of the device.
 
   Device Type: {{{deviceType}}}
+  {{#if brand}}Brand: {{{brand}}}{{/if}}
+  {{#if model}}Model: {{{model}}}{{/if}}
   Age (months): {{{ageMonths}}}
   Condition: {{{condition}}}
 
+  Please be as specific as possible if the brand and model are provided.
   Please provide the output in JSON format.
   `,
 });
@@ -61,6 +66,3 @@ const getImpactInsightsFlow = ai.defineFlow(
     return output!;
   }
 );
-
-
-
