@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { ewasteDataTool } from '../tools/ewaste-data-tool';
 
 const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
@@ -27,7 +28,7 @@ const GetImpactInsightsOutputSchema = z.object({
     copper: z.number().describe('The estimated amount of recoverable copper (in grams).'),
     rareEarths: z.number().describe('The estimated amount of recoverable rare earth materials (in grams).'),
   }).describe('The estimated amounts of recoverable raw materials.'),
-  impactSummary: z.string().describe('A summary of the environmental impact of the device.'),
+  impactSummary: z.string().describe('A summary of the environmental impact of the device. If specific data was not found for the model, this summary should state that the figures are an estimate for a generic device of that type.'),
 });
 export type GetImpactInsightsOutput = z.infer<typeof GetImpactInsightsOutputSchema>;
 
@@ -39,19 +40,24 @@ const prompt = ai.definePrompt({
   name: 'getImpactInsightsPrompt',
   input: {schema: GetImpactInsightsInputSchema},
   output: {schema: GetImpactInsightsOutputSchema},
-  prompt: `You are an AI assistant that provides insights into the environmental impact of electronic devices.
+  tools: [ewasteDataTool],
+  system: `You are an AI assistant that provides insights into the environmental impact of electronic devices.
 
-  Based on the device type, age, and condition, estimate the CO2-equivalent emissions and the amounts of recoverable raw materials (gold, copper, and rare earth materials).
-  Also, provide a summary of the environmental impact of the device.
+  Your primary goal is to provide accurate data. You have a tool to look up e-waste data for specific device models.
+
+  1.  **Use the Tool:** If the user provides a brand and model, you MUST use the \`ewasteDataTool\` to find data for that device.
+  2.  **Analyze Tool Output:**
+      *   If the tool returns data, use that data to answer. The condition of the device ('good', 'fair', 'poor') and its age can slightly modify the CO2 and material values (e.g., a 'poor' condition device might have slightly lower recoverable materials, an older device has a larger relative footprint).
+      *   If the tool returns no data for the specific model, you MUST inform the user that specific data is not available. Then, provide a generic estimate based on the \`deviceType\`, age, and condition. Do NOT invent data or models.
+  3.  **Generate Summary:** Based on the data (either from the tool or a generic estimate), provide a concise \`impactSummary\`. If you are providing a generic estimate, you must state this clearly in the summary.
+  `,
+  prompt: `Please provide the environmental impact assessment for the following device:
 
   Device Type: {{{deviceType}}}
   {{#if brand}}Brand: {{{brand}}}{{/if}}
   {{#if model}}Model: {{{model}}}{{/if}}
   Age (months): {{{ageMonths}}}
   Condition: {{{condition}}}
-
-  Please be as specific as possible if the brand and model are provided.
-  Please provide the output in JSON format.
   `,
 });
 
