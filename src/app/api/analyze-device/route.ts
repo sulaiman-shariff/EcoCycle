@@ -250,10 +250,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Perform multiple analyses
+    const labelPromise = vision.labelDetection(imageUrl);
+    const textPromise = vision.textDetection(imageUrl);
+    const objectPromise = typeof vision.objectLocalization === 'function'
+      ? vision.objectLocalization(imageUrl)
+      : Promise.resolve([{ localizedObjectAnnotations: [] }]);
+
     const [labelResult, textResult, objectResult] = await Promise.all([
-      vision.labelDetection(imageUrl),
-      vision.textDetection(imageUrl),
-      vision.objectLocalization(imageUrl)
+      labelPromise,
+      textPromise,
+      objectPromise
     ]);
 
     const labels = labelResult[0].labelAnnotations || [];
