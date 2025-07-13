@@ -1,4 +1,4 @@
-import { initializeApp, getApps, type FirebaseOptions } from 'firebase/app';
+import { initializeApp, getApps, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,7 +10,7 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 // Only initialize Firebase if we're in the browser and have valid config
-let firebase_app = null;
+let firebase_app: FirebaseApp | null = null;
 
 // Check if we're in a browser environment and have required config
 const isBrowser = typeof window !== 'undefined';
@@ -32,4 +32,5 @@ if (isBrowser && hasValidConfig) {
   firebase_app = null;
 }
 
+// Always export as FirebaseApp|null for type safety
 export default firebase_app;

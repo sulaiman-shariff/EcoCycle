@@ -99,11 +99,11 @@ export const signInWithEmail = async (email: string, password: string) => {
   return { result, error };
 };
 
-export const signUpWithEmail = async (email, password) => {
-  let result = null,
-      error = null;
+export const signUpWithEmail = async (email: string, password: string) => {
+  let result: any = null,
+      error: any = null;
   try {
-      result = await createUserWithEmailAndPassword(auth, email, password);
+      result = await createUserWithEmailAndPassword(auth!, email, password);
   } catch (e) {
       error = e;
       throw error;
