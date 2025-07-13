@@ -48,7 +48,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password. Please try again.');
+        setError('Invalid credentials. If you are a new user, please sign up.');
       } else {
         setError(err.message || 'An unexpected error occurred.');
       }
