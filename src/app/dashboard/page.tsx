@@ -1,3 +1,4 @@
+'use client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImpactCalculator } from "@/components/impact-calculator";
 import { AiChatbot } from "@/components/ai-chatbot";
@@ -5,8 +6,34 @@ import LocatorPage from "../locator/page";
 import { Leaf } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/firebase/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { logOut } from "@/lib/firebase/auth";
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <p>Loading...</p>
+        </div>
+    );
+  }
+
+  const handleLogout = async () => {
+    await logOut();
+    router.push('/');
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
       <header className="w-full max-w-4xl mb-8 flex justify-between items-center">
@@ -16,11 +43,12 @@ export default function DashboardPage() {
             EcoVision
           </h1>
         </div>
-        <Button variant="outline" asChild>
-            <Link href="/">
-                &larr; Back to Home
-            </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">Welcome, {user.email}</p>
+            <Button variant="outline" onClick={handleLogout}>
+                Logout
+            </Button>
+        </div>
       </header>
       <main className="w-full max-w-4xl">
         <Tabs defaultValue="calculator" className="w-full">

@@ -14,6 +14,9 @@ export default function LandingPage() {
             <span className="text-2xl font-headline text-primary">EcoVision</span>
           </Link>
           <nav className="ml-auto flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link href="/login">Log In</Link>
+            </Button>
             <Button asChild>
               <Link href="/dashboard">Get Started</Link>
             </Button>
@@ -26,8 +29,8 @@ export default function LandingPage() {
            <Image 
             src="https://placehold.co/1920x1080.png" 
             alt="Hero background" 
-            layout="fill" 
-            objectFit="cover" 
+            fill={true}
+            style={{objectFit: 'cover'}}
             className="z-0 opacity-20"
             data-ai-hint="nature technology"
            />
