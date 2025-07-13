@@ -1,10 +1,10 @@
 
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 
-// Initialize Vision API client
-const vision = new ImageAnnotatorClient({
-  keyFilename: process.env.GOOGLE_CLOUD_KEY_FILE || './striped-sight-443116-g6-a85ecf31e5a9.json'
-});
+// Initialize Vision API client.
+// In a Google Cloud environment (like App Hosting), the client will automatically
+// find the service account credentials without needing a key file.
+const vision = new ImageAnnotatorClient();
 
 export interface VisionAnalysisResult {
   deviceType: string;
