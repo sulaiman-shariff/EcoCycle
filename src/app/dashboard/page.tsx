@@ -2,8 +2,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImpactCalculator } from "@/components/impact-calculator";
 import { AiChatbot } from "@/components/ai-chatbot";
+import { DeviceAnalyzer } from "@/components/device-analyzer";
+import { UserStats } from "@/components/user-stats";
 import LocatorPage from "../locator/page";
-import { Leaf, LogOut, User, Settings, Bell, Search, BarChart3, MessageCircle, MapPin, Calculator } from "lucide-react";
+import { Leaf, LogOut, User, Settings, Bell, Search, BarChart3, MessageCircle, MapPin, Calculator, Camera, BarChart } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +60,10 @@ export default function DashboardPage() {
         return <MessageCircle className="w-4 h-4" />;
       case "locator":
         return <MapPin className="w-4 h-4" />;
+      case "analyzer":
+        return <Camera className="w-4 h-4" />;
+      case "stats":
+        return <BarChart className="w-4 h-4" />;
       default:
         return null;
     }
@@ -160,30 +166,46 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="bg-gradient-to-r from-green-600 to-blue-600 p-4 sm:p-6">
-              <TabsList className="grid w-full grid-cols-3 bg-white/20 backdrop-blur-sm border-0 h-auto">
+              <TabsList className="grid w-full grid-cols-5 bg-white/20 backdrop-blur-sm border-0 h-auto">
                 <TabsTrigger 
                   value="calculator" 
                   className="data-[state=active]:bg-white data-[state=active]:text-green-600 text-white hover:bg-white/20 transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
                 >
                   <Calculator className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Impact Calculator</span>
-                  <span className="sm:hidden">Calculator</span>
+                  <span className="hidden sm:inline">Calculator</span>
+                  <span className="sm:hidden">Calc</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="chatbot" 
                   className="data-[state=active]:bg-white data-[state=active]:text-blue-600 text-white hover:bg-white/20 transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
                 >
                   <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">AI Assistant</span>
-                  <span className="sm:hidden">Assistant</span>
+                  <span className="hidden sm:inline">Assistant</span>
+                  <span className="sm:hidden">AI</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="locator" 
                   className="data-[state=active]:bg-white data-[state=active]:text-purple-600 text-white hover:bg-white/20 transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
                 >
                   <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Recycling Locator</span>
-                  <span className="sm:hidden">Locator</span>
+                  <span className="hidden sm:inline">Locator</span>
+                  <span className="sm:hidden">Map</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="analyzer" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-orange-600 text-white hover:bg-white/20 transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
+                >
+                  <Camera className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Analyzer</span>
+                  <span className="sm:hidden">Scan</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="stats" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-indigo-600 text-white hover:bg-white/20 transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
+                >
+                  <BarChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Stats</span>
+                  <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -216,6 +238,26 @@ export default function DashboardPage() {
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Recycling Center Locator</h2>
                   </div>
                   <LocatorPage />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="analyzer" className="mt-0">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                    <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Device Image Analyzer</h2>
+                  </div>
+                  <DeviceAnalyzer />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="stats" className="mt-0">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                    <BarChart className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Your Recycling Statistics</h2>
+                  </div>
+                  <UserStats />
                 </div>
               </TabsContent>
             </div>
