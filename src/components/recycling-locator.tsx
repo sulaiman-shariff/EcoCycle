@@ -1,9 +1,10 @@
 "use client";
 
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Map, Pin, Phone, Clock } from "lucide-react";
-import Image from "next/image";
+import { Map as MapIcon, Pin, Phone, Clock } from "lucide-react";
+import { APIProvider, Map, AdvancedMarker, Pin as MapPin } from '@vis.gl/react-google-maps';
 
 const centers = [
   {
@@ -13,8 +14,7 @@ const centers = [
     services: ['Drop-off', 'Pickup', 'Data Destruction'],
     hours: 'Mon-Fri: 9am - 5pm',
     phone: '(555) 123-4567',
-    image: 'https://placehold.co/600x400.png',
-    aiHint: 'recycling center'
+    position: { lat: 33.7490, lng: -84.3880 } // Approx. Atlanta, GA
   },
   {
     id: '2',
@@ -23,8 +23,7 @@ const centers = [
     services: ['Drop-off', 'Repair'],
     hours: 'Tue-Sat: 10am - 6pm',
     phone: '(555) 987-6543',
-    image: 'https://placehold.co/600x400.png',
-    aiHint: 'electronics repair'
+    position: { lat: 34.0522, lng: -118.2437 } // Approx. Los Angeles, CA
   },
   {
     id: '3',
@@ -33,8 +32,7 @@ const centers = [
     services: ['Drop-off', 'Pickup', 'Donation'],
     hours: 'Mon-Sat: 8am - 4pm',
     phone: '(555) 246-8135',
-    image: 'https://placehold.co/600x400.png',
-    aiHint: 'warehouse interior'
+    position: { lat: 40.7128, lng: -74.0060 } // Approx. New York, NY
   },
    {
     id: '4',
@@ -43,13 +41,46 @@ const centers = [
     services: ['Drop-off', 'Mobile Phones'],
     hours: 'Weekends: 10am - 2pm',
     phone: '(555) 369-1472',
-    image: 'https://placehold.co/600x400.png',
-    aiHint: 'community center'
+    position: { lat: 41.8781, lng: -87.6298 } // Approx. Chicago, IL
   }
 ];
 
+const LocatorMap = () => {
+    const defaultCenter = { lat: 39.8283, lng: -98.5795 }; // Center of US
+    return (
+        <div className="h-[400px] w-full rounded-lg overflow-hidden border">
+            <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
+                <Map 
+                    defaultCenter={defaultCenter} 
+                    defaultZoom={4} 
+                    mapId="ecovision_map"
+                    gestureHandling={'greedy'}
+                    disableDefaultUI={true}
+                >
+                    {centers.map((center) => (
+                        <AdvancedMarker key={center.id} position={center.position} title={center.name}>
+                            <MapPin scale={1.2}>
+                                <div style={{
+                                    width: 24,
+                                    height: 24,
+                                    backgroundColor: 'hsl(var(--primary))',
+                                    borderRadius: '50%',
+                                    border: '2px solid white',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                }}></div>
+                            </MapPin>
+                        </AdvancedMarker>
+                    ))}
+                </Map>
+            </APIProvider>
+        </div>
+    )
+}
+
 
 export function RecyclingLocator() {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
   return (
     <Card className="w-full shadow-lg">
       <CardHeader>
@@ -59,18 +90,16 @@ export function RecyclingLocator() {
       <CardContent>
         <Card className="mb-8 overflow-hidden">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Map className="h-5 w-5 text-primary"/> Interactive Map</CardTitle>
+            <CardTitle className="flex items-center gap-2"><MapIcon className="h-5 w-5 text-primary"/> Interactive Map</CardTitle>
           </CardHeader>
-          <CardContent className="text-center text-muted-foreground p-0">
-             <Image 
-                src="https://placehold.co/800x400.png"
-                alt="Map placeholder"
-                width={800}
-                height={400}
-                className="w-full object-cover"
-                data-ai-hint="world map"
-             />
-             <p className="p-4 bg-muted">Interactive map functionality coming soon.</p>
+          <CardContent className="p-0">
+            {apiKey ? (
+                <LocatorMap />
+            ) : (
+                <div className="text-center text-muted-foreground p-4 bg-muted">
+                    <p>Google Maps API key is missing. Please add it to your environment variables to enable the map.</p>
+                </div>
+            )}
           </CardContent>
         </Card>
         
