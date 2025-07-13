@@ -45,11 +45,11 @@ const centers = [
   }
 ];
 
-const LocatorMap = () => {
+const LocatorMap = ({ apiKey }: { apiKey: string }) => {
     const defaultCenter = { lat: 39.8283, lng: -98.5795 }; // Center of US
     return (
         <div className="h-[400px] w-full rounded-lg overflow-hidden border">
-            <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
+            <APIProvider apiKey={apiKey}>
                 <Map 
                     defaultCenter={defaultCenter} 
                     defaultZoom={4} 
@@ -78,9 +78,7 @@ const LocatorMap = () => {
 }
 
 
-export function RecyclingLocator() {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
+export function RecyclingLocator({ apiKey }: { apiKey: string }) {
   return (
     <Card className="w-full shadow-lg">
       <CardHeader>
@@ -94,10 +92,10 @@ export function RecyclingLocator() {
           </CardHeader>
           <CardContent className="p-0">
             {apiKey ? (
-                <LocatorMap />
+              <LocatorMap apiKey={apiKey} />
             ) : (
-                <div className="text-center text-muted-foreground p-4 bg-muted">
-                    <p>Google Maps API key is missing. Please add it to your environment variables to enable the map.</p>
+              <div className="text-center text-muted-foreground p-4 bg-muted">
+                <p>Google Maps API key is missing. Please add it to your environment variables to enable the map.</p>
                 </div>
             )}
           </CardContent>

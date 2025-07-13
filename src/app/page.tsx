@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImpactCalculator } from "@/components/impact-calculator";
 import { AiChatbot } from "@/components/ai-chatbot";
-import { RecyclingLocator } from "@/components/recycling-locator";
+import LocatorPage from "./locator/page";
 import { Leaf } from "lucide-react";
 
 export default function Home() {
@@ -32,7 +32,7 @@ export default function Home() {
             <AiChatbot />
           </TabsContent>
           <TabsContent value="locator" className="mt-6">
-            <RecyclingLocator />
+            <LocatorPage />
           </TabsContent>
         </Tabs>
       </main>
