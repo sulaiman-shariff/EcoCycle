@@ -48,3 +48,7 @@ firestore-debug.log
 .firebase/
 functions/.next/
 functions/node_modules/
+# firebase build outputs & Next.js cache in functions
+.firebase/
+functions/.next/
+functions/node_modules/
