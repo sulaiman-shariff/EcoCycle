@@ -1,5 +1,6 @@
 
 import { ImageAnnotatorClient } from '@google-cloud/vision';
+import { protos } from '@google-cloud/vision';
 
 // Initialize Vision API client.
 // In a Google Cloud environment (like App Hosting), the client will automatically
@@ -64,11 +65,13 @@ const CONDITION_KEYWORDS = {
 
 export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalysisResult> => {
   try {
+    const imageRequest = { image: { source: { imageUri: imageUrl } } };
+
     // Perform multiple analyses
     const [labelResult, textResult, objectResult] = await Promise.all([
-      vision.labelDetection(imageUrl),
-      vision.textDetection(imageUrl),
-      vision.objectLocalization(imageUrl),
+      vision.labelDetection(imageRequest),
+      vision.textDetection(imageRequest),
+      vision.objectLocalization(imageRequest),
     ]);
 
     const labels = labelResult[0].labelAnnotations || [];
@@ -76,9 +79,7 @@ export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalys
     const objects = objectResult[0].localizedObjectAnnotations || [];
 
     // Extract text content
-    const textContent = textBlocks
-      .map(block => block.description)
-      .join(' ')
+    const textContent = (textBlocks[0]?.description || '')
       .toLowerCase();
 
     // Analyze device type
@@ -119,12 +120,12 @@ export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalys
 };
 
 const analyzeDeviceType = (
-  labels: any[], 
+  labels: protos.google.cloud.vision.v1.IEntityAnnotation[], 
   textContent: string, 
-  objects: any[]
+  objects: protos.google.cloud.vision.v1.ILocalizedObjectAnnotation[]
 ): string => {
-  const labelTexts = labels.map(label => label.description.toLowerCase());
-  const objectNames = objects.map(obj => obj.name.toLowerCase());
+  const labelTexts = labels.map(label => (label.description || '').toLowerCase());
+  const objectNames = objects.map(obj => (obj.name || '').toLowerCase());
   
   const allText = [...labelTexts, ...objectNames, textContent].join(' ');
   
@@ -141,8 +142,8 @@ const analyzeDeviceType = (
   return 'other';
 };
 
-const analyzeBrand = (textContent: string, labels: any[]): string | undefined => {
-  const labelTexts = labels.map(label => label.description.toLowerCase());
+const analyzeBrand = (textContent: string, labels: protos.google.cloud.vision.v1.IEntityAnnotation[]): string | undefined => {
+  const labelTexts = labels.map(label => (label.description || '').toLowerCase());
   const allText = [...labelTexts, textContent].join(' ');
   
   for (const [brand, keywords] of Object.entries(BRAND_KEYWORDS)) {
@@ -158,27 +159,27 @@ const analyzeBrand = (textContent: string, labels: any[]): string | undefined =>
   return undefined;
 };
 
-const analyzeModel = (textContent: string, labels: any[]): string | undefined => {
+const analyzeModel = (textContent: string, labels: protos.google.cloud.vision.v1.IEntityAnnotation[]): string | undefined => {
   // Look for model patterns in text
   const modelPatterns = [
-    /(iphone|galaxy|pixel)\s*(\d+)/i,
-    /(macbook|inspiron|pavilion)\s*(\w+)/i,
-    /(ipad|surface)\s*(\w+)/i,
-    /(xbox|playstation)\s*(\d+)/i
+    /(iphone|galaxy|pixel)\s*(\w+\s*\w*)/i,
+    /(macbook|inspiron|pavilion)\s*(\w+\s*\w*)/i,
+    /(ipad|surface)\s*(\w+\s*\w*)/i,
+    /(xbox|playstation)\s*(\d+|one|series\s*[sx])/i
   ];
   
   for (const pattern of modelPatterns) {
     const match = textContent.match(pattern);
     if (match) {
-      return `${match[1]} ${match[2]}`;
+      return `${match[1]} ${match[2]}`.trim();
     }
   }
   
   return undefined;
 };
 
-const analyzeCondition = (labels: any[], textContent: string): string => {
-  const labelTexts = labels.map(label => label.description.toLowerCase());
+const analyzeCondition = (labels: protos.google.cloud.vision.v1.IEntityAnnotation[], textContent: string): string => {
+  const labelTexts = labels.map(label => (label.description || '').toLowerCase());
   const allText = [...labelTexts, textContent].join(' ');
   
   for (const [condition, keywords] of Object.entries(CONDITION_KEYWORDS)) {
@@ -194,11 +195,11 @@ const analyzeCondition = (labels: any[], textContent: string): string => {
   return 'good'; // Default condition
 };
 
-const extractFeatures = (labels: any[], textContent: string, objects: any[]): string[] => {
+const extractFeatures = (labels: protos.google.cloud.vision.v1.IEntityAnnotation[], textContent: string, objects: protos.google.cloud.vision.v1.ILocalizedObjectAnnotation[]): string[] => {
   const features: string[] = [];
   const allText = [
-    ...labels.map(l => l.description.toLowerCase()),
-    ...objects.map(o => o.name.toLowerCase()),
+    ...labels.map(l => (l.description || '').toLowerCase()),
+    ...objects.map(o => (o.name || '').toLowerCase()),
     textContent
   ].join(' ');
   
@@ -225,10 +226,10 @@ const extractFeatures = (labels: any[], textContent: string, objects: any[]): st
     features.push('Display Screen');
   }
   
-  return features;
+  return Array.from(new Set(features));
 };
 
-const calculateConfidence = (labels: any[], textContent: string, objects: any[]): number => {
+const calculateConfidence = (labels: protos.google.cloud.vision.v1.IEntityAnnotation[], textContent: string, objects: protos.google.cloud.vision.v1.ILocalizedObjectAnnotation[]): number => {
   let confidence = 0;
   
   // Base confidence from label scores
@@ -244,7 +245,8 @@ const calculateConfidence = (labels: any[], textContent: string, objects: any[])
   
   // Boost confidence if we found relevant objects
   if (objects.length > 0) {
-    confidence += 0.3;
+    const avgObjectScore = objects.reduce((sum, obj) => sum + (obj.score || 0), 0) / objects.length;
+    confidence += avgObjectScore * 0.3;
   }
   
   return Math.min(confidence, 1.0);
