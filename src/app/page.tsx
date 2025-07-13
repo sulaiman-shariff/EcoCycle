@@ -1,11 +1,17 @@
+
+'use client';
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Leaf, Recycle, Bot, MapPin, Calculator, TrendingUp, Globe, Shield, Zap, Users, Award } from "lucide-react";
+import { Leaf, Recycle, Bot, MapPin, Calculator, TrendingUp, Globe, Shield, Zap, Users, Award, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function LandingPage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Header */}
@@ -35,12 +41,30 @@ export default function LandingPage() {
             </Button>
           </nav>
           {/* Mobile Menu Button */}
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+          <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <span className="sr-only">Toggle Menu</span>
           </Button>
         </div>
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+            <div className="md:hidden bg-white/90 backdrop-blur-md border-t">
+                <nav className="flex flex-col items-center gap-4 p-4">
+                    <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors" onClick={() => setIsMenuOpen(false)}>
+                        Features
+                    </Link>
+                    <Link href="#about" className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors" onClick={() => setIsMenuOpen(false)}>
+                        About
+                    </Link>
+                    <Button variant="ghost" asChild>
+                        <Link href="/login">Log In</Link>
+                    </Button>
+                    <Button asChild className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+                        <Link href="/dashboard">Get Started</Link>
+                    </Button>
+                </nav>
+            </div>
+        )}
       </header>
 
       <main className="flex-1">
@@ -189,7 +213,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="w-full py-12 sm:py-20 bg-white">
+        <section id="about" className="w-full py-12 sm:py-20 bg-white">
           <div className="w-full px-4 md:px-6 text-center">
             <h2 className="text-2xl sm:text-3xl font-headline font-bold mb-4 sm:mb-6 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
               Ready to Make a Difference?
