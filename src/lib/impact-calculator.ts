@@ -7,7 +7,7 @@ import {
   type DeviceImpactData
 } from './impact-data';
 import { fetchElectricityEmissions, fetchMaterialPrices } from './environmental-apis';
-import { EwasteDeviceData } from '@/data/ewaste-db';
+import { ewasteDB, type EwasteDeviceData } from '@/data/ewaste-db';
 
 export interface ImpactCalculationInput {
   deviceType: string;
@@ -60,7 +60,13 @@ export interface ImpactCalculationResult {
   materialValueUSD?: number;
 }
 
-export async function calculateDeviceImpact(input: ImpactCalculationInput, specificDeviceData?: EwasteDeviceData): Promise<ImpactCalculationResult> {
+export async function calculateDeviceImpact(input: ImpactCalculationInput): Promise<ImpactCalculationResult> {
+  const specificDeviceData = input.brand && input.model ? ewasteDB.find(
+      (d) =>
+        d.brand.toLowerCase() === input.brand!.toLowerCase() &&
+        d.model.toLowerCase() === input.model!.toLowerCase()
+    ) : undefined;
+    
   const deviceData = specificDeviceData ?
     { // Adapt EwasteDeviceData to DeviceImpactData structure
       name: `${specificDeviceData.brand} ${specificDeviceData.model}`,

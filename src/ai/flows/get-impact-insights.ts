@@ -99,7 +99,7 @@ const getImpactInsightsFlow = ai.defineFlow(
         - Condition: ${input.condition}
 
         Instructions:
-        1. If the user provides a specific brand and model, you MUST use the ewasteDataTool to look up its data.
+        1. If the user provides a specific brand and model, you MUST use the ewasteDataTool to look up its data. Base your summary on this specific data if found.
         2. Based on all the information, generate a concise impact summary (2-3 sentences).
         3. Provide 3-4 actionable recommendations for the user based on the device's condition and age.
         4. If the tool does not find a specific device, mention in your summary that the calculation is a general estimate for the device category.
@@ -113,12 +113,11 @@ const getImpactInsightsFlow = ai.defineFlow(
         })
       }
     });
-
-    const toolOutput = llmResponse.toolRequest?.tool?.ewasteDataTool;
-    const specificDeviceData = toolOutput ? EwasteDeviceData.parse(toolOutput) : undefined;
     
-    // 2. Perform the definitive data calculation using the (optional) specific data.
-    const calculationResult = await calculateDeviceImpact(input, specificDeviceData);
+    // 2. Perform the definitive data calculation.
+    // Note: The AI above has already used the tool if applicable. Its generated text reflects that.
+    // Now we run the calculation side to get the final numbers.
+    const calculationResult = await calculateDeviceImpact(input);
 
     const aiOutput = llmResponse.output;
     if (!aiOutput) {
