@@ -1,9 +1,8 @@
 import { RecyclingLocator } from "@/components/recycling-locator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, MapPin, AlertTriangle } from "lucide-react";
+import { Terminal, MapPin, AlertTriangle, Search, Award, Shield, Globe, Users, Leaf } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Search, Award, Shield, Globe, Users, Leaf } from "lucide-react";
 
 export default function LocatorPage() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;

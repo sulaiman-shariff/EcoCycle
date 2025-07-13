@@ -1,13 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import dynamic from 'next/dynamic';
-
-// Dynamically import AuthContextProvider to prevent SSR issues
-const AuthContextProvider = dynamic(() => import('@/lib/firebase/auth').then(mod => ({ default: mod.AuthContextProvider })), {
-  ssr: false,
-  loading: () => <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50" />
-});
+import { AuthContextProvider } from '@/lib/firebase/auth';
 
 export const metadata: Metadata = {
   title: 'EcoCycle',

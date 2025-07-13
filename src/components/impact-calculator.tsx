@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, CartesianGrid, XAxis, YAxis, Bar, PieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Zap, Mountain, Gauge, Tree, Car, Smartphone, Leaf, Droplets, Trash2, Clock, Scale, Calculator, TrendingUp, Globe, Shield, Award, Sparkles, Target, ArrowUpRight } from "lucide-react";
+import { Loader2, Zap, Mountain, Gauge, Car, Smartphone, Leaf, Droplets, Trash2, Clock, Scale, Calculator, TrendingUp, Globe, Shield, Award, Sparkles, Target, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
@@ -159,21 +159,6 @@ export function ImpactCalculator() {
                           {...field} 
                         />
                       </FormControl>
-<<<<<<< HEAD
-                      <SelectContent>
-                        <SelectItem value="smartphone">Smartphone</SelectItem>
-                        <SelectItem value="laptop">Laptop</SelectItem>
-                        <SelectItem value="tablet">Tablet</SelectItem>
-                        <SelectItem value="desktop_pc">Desktop PC</SelectItem>
-                        <SelectItem value="television">Television</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-=======
                       <FormMessage />
                     </FormItem>
                   )}
@@ -181,7 +166,6 @@ export function ImpactCalculator() {
               </div>
               
               <FormField
->>>>>>> 34b20041bf5aeeeae8300bead3f52ce1966d2966
                 control={form.control}
                 name="condition"
                 render={({ field }) => (
@@ -252,130 +236,6 @@ export function ImpactCalculator() {
                   </FormItem>
                 )}
               />
-<<<<<<< HEAD
-              <FormField
-                control={form.control}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Apple, Samsung" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="model"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Model (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., iPhone 14, Galaxy S23" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="condition"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Condition</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col md:flex-row gap-4"
-                    >
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="good" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Good</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="fair" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Fair</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="poor" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Poor</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={loading} className="w-full md:w-auto">
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? "Calculating..." : "Calculate Impact"}
-            </Button>
-          </form>
-        </Form>
-        {error && (
-            <Alert variant="destructive" className="mt-6">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
-        )}
-        {result && (
-          <div className="mt-8 pt-8 border-t">
-            <h3 className="text-2xl font-headline font-semibold mb-4 text-primary">Impact Results</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">CO₂ Equivalent</CardTitle>
-                  <Gauge className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{result.co2eq} kg</div>
-                  <p className="text-xs text-muted-foreground">Estimated carbon footprint</p>
-                </CardContent>
-              </Card>
-               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">AI Impact Summary</CardTitle>
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{result.impactSummary}</p>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Mountain className="h-5 w-5 text-muted-foreground" /> Recoverable Raw Materials</CardTitle>
-                  <CardDescription>Estimated amount of valuable materials that can be recovered.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-                    <BarChart accessibilityLayer data={[
-                        { name: "Gold", value: result.rawMaterials.gold },
-                        { name: "Copper", value: result.rawMaterials.copper },
-                        { name: "Rare Earths", value: result.rawMaterials.rareEarths },
-                    ]}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-                        <YAxis tickFormatter={(value) => `${value}g`}/>
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                        <Bar dataKey="value" fill="var(--color-value)" radius={5} />
-                    </BarChart>
-                    </ChartContainer>
-                </CardContent>
-              </Card>
-            </div>
-=======
               
               <Button 
                 type="submit" 
@@ -451,7 +311,6 @@ export function ImpactCalculator() {
                 </div>
               </CardContent>
             </Card>
->>>>>>> 34b20041bf5aeeeae8300bead3f52ce1966d2966
           </div>
 
           {/* Environmental Comparisons */}
@@ -469,7 +328,7 @@ export function ImpactCalculator() {
                   <div className="group p-4 sm:p-6 bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl border border-green-200 hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <Tree className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                        <Leaf className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                       </div>
                       <div>
                         <p className="text-xl sm:text-2xl font-bold text-green-900">{result.comparisons.treeEquivalents.toFixed(1)}</p>

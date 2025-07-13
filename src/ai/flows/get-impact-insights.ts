@@ -10,11 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-<<<<<<< HEAD
-import { ewasteDataTool } from '../tools/ewaste-data-tool';
-=======
 import { calculateDeviceImpact, type ImpactCalculationResult } from '@/lib/impact-calculator';
->>>>>>> 34b20041bf5aeeeae8300bead3f52ce1966d2966
 
 const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
@@ -33,9 +29,6 @@ const GetImpactInsightsOutputSchema = z.object({
     copper: z.number().describe('The estimated amount of recoverable copper (in grams).'),
     rareEarths: z.number().describe('The estimated amount of recoverable rare earth materials (in grams).'),
   }).describe('The estimated amounts of recoverable raw materials.'),
-<<<<<<< HEAD
-  impactSummary: z.string().describe('A summary of the environmental impact of the device. If specific data was not found for the model, this summary should state that the figures are an estimate for a generic device of that type.'),
-=======
   impactSummary: z.string().describe('A summary of the environmental impact of the device.'),
   // Additional fields for enhanced insights
   comparisons: z.object({
@@ -49,7 +42,6 @@ const GetImpactInsightsOutputSchema = z.object({
     remainingLifespan: z.number().describe('Remaining useful life in years.'),
   }).describe('Device information.'),
   materialValueUSD: z.number().optional().describe('Estimated real-time value of recoverable materials in USD.'),
->>>>>>> 34b20041bf5aeeeae8300bead3f52ce1966d2966
 });
 export type GetImpactInsightsOutput = z.infer<typeof GetImpactInsightsOutputSchema>;
 
@@ -84,7 +76,6 @@ const prompt = ai.definePrompt({
   name: 'getImpactInsightsPrompt',
   input: {schema: GetImpactInsightsInputSchema},
   output: {schema: GetImpactInsightsOutputSchema},
-  tools: [ewasteDataTool],
   system: `You are an AI assistant that provides insights into the environmental impact of electronic devices.
 
   Your primary goal is to provide accurate data. You have a tool to look up e-waste data for specific device models.
