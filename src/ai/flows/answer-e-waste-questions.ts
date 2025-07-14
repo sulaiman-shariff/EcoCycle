@@ -1,12 +1,4 @@
 'use server';
-/**
- * @fileOverview Answers questions about e-waste, providing reliable information and best practices.
- *
- * - answerEWasteQuestions - A function that answers e-waste related questions.
- * - AnswerEWasteQuestionsInput - The input type for the answerEWasteQuestions function.
- * - AnswerEWasteQuestionsOutput - The return type for the answerEWasteQuestions function.
- */
-
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
@@ -19,10 +11,6 @@ const AnswerEWasteQuestionsOutputSchema = z.object({
   answer: z.string().describe('The answer to the e-waste question.'),
 });
 export type AnswerEWasteQuestionsOutput = z.infer<typeof AnswerEWasteQuestionsOutputSchema>;
-
-export async function answerEWasteQuestions(input: AnswerEWasteQuestionsInput): Promise<AnswerEWasteQuestionsOutput> {
-  return answerEWasteQuestionsFlow(input);
-}
 
 const prompt = ai.definePrompt({
   name: 'answerEWasteQuestionsPrompt',
@@ -48,3 +36,7 @@ const answerEWasteQuestionsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export async function answerEWasteQuestions(input: AnswerEWasteQuestionsInput): Promise<AnswerEWasteQuestionsOutput> {
+  return answerEWasteQuestionsFlow(input);
+}

@@ -89,9 +89,7 @@ export function AiChatbot() {
     form.setValue('question', ''); // Clear input immediately
 
     // Always send Indian context to the AI model
-    const response = await askAiAction({ 
-      question: values.question
-    });
+    const response = await askAiAction({ question: values.question });
 
     if (response.error) {
       setError(response.error);

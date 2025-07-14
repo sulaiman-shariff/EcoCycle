@@ -16,14 +16,38 @@ import {
   serverTimestamp,
   Timestamp,
   DocumentData,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
+  type Firestore
 } from 'firebase/firestore';
 import firebase_app from './client';
-import { getAuth } from 'firebase/auth';
+import { getAuth, type Auth } from 'firebase/auth';
 
 // Initialize Firestore
-const db = getFirestore(firebase_app!);
-const auth = getAuth(firebase_app!);
+let db: Firestore;
+let auth: Auth;
+
+try {
+  db = getFirestore(firebase_app!);
+  auth = getAuth(firebase_app!);
+  console.log('Firestore initialized successfully');
+} catch (error) {
+  console.error('Firestore initialization failed:', error);
+  throw new Error('Firestore or Auth could not be initialized. Please check your Firebase configuration.');
+}
+
+// Utility to recursively remove undefined fields from an object
+function removeUndefined(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefined);
+  } else if (obj && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, removeUndefined(v)])
+    );
+  }
+  return obj;
+}
 
 // Types
 export interface UserProfile {
@@ -116,13 +140,21 @@ export interface Analytics {
 
 // User Profile Functions
 export const createUserProfile = async (profile: Omit<UserProfile, 'createdAt' | 'updatedAt'>): Promise<void> => {
-  const now = serverTimestamp() as Timestamp;
-  const userRef = doc(db, 'users', profile.uid);
-  await setDoc(userRef, {
-    ...profile,
-    createdAt: now,
-    updatedAt: now
-  });
+  try {
+    if (!db) {
+      throw new Error('Firestore not initialized');
+    }
+    const now = serverTimestamp() as Timestamp;
+    const userRef = doc(db, 'users', profile.uid);
+    await setDoc(userRef, {
+      ...profile,
+      createdAt: now,
+      updatedAt: now
+    });
+  } catch (error) {
+    console.error('Failed to create user profile:', error);
+    throw new Error('Failed to create user profile. Please check your Firebase configuration.');
+  }
 };
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
@@ -199,13 +231,25 @@ export const deleteRecyclingRecord = async (recordId: string): Promise<void> => 
 
 // Device Analysis Functions
 export const saveDeviceAnalysis = async (analysis: Omit<DeviceAnalysis, 'id' | 'createdAt'>): Promise<string> => {
-  const analysisData = {
-    ...analysis,
-    createdAt: serverTimestamp()
-  };
-  
-  const docRef = await addDoc(collection(db, 'device_analysis'), analysisData);
-  return docRef.id;
+  try {
+    if (!db) {
+      console.warn('Firestore not initialized, skipping device analysis save');
+      return 'demo-id';
+    }
+    // Recursively remove undefined fields from analysis and analysisResult
+    const sanitizedAnalysis = removeUndefined({
+      ...analysis,
+      analysisResult: removeUndefined(analysis.analysisResult),
+      createdAt: serverTimestamp()
+    });
+    const docRef = await addDoc(collection(db, 'device_analysis'), sanitizedAnalysis);
+    return docRef.id;
+  } catch (error) {
+    console.error('Failed to save device analysis:', error);
+    // Don't throw error to prevent breaking the device analyzer
+    console.warn('Device analysis will not be saved to database');
+    return 'demo-id';
+  }
 };
 
 export const getUserDeviceAnalysis = async (userId: string, limitCount: number = 20): Promise<DeviceAnalysis[]> => {

@@ -12,6 +12,7 @@ import { Upload, Camera, Image as ImageIcon, Zap, Leaf, DollarSign, Info, Loader
 import { VisionAnalysisResult } from '@/lib/vision-api';
 import { useAuth } from '@/lib/firebase/auth';
 import { analyzeDeviceAction } from '@/app/actions';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface DeviceAnalyzerProps {
   onAnalysisComplete?: (result: VisionAnalysisResult) => void;
@@ -63,25 +64,31 @@ export function DeviceAnalyzer({ onAnalysisComplete }: DeviceAnalyzerProps) {
         }
       };
       reader.onloadend = async () => {
-        const base64ImageUrl = reader.result as string;
-        setSelectedImage(base64ImageUrl);
-        setUploadProgress(90);
+        try {
+          const base64ImageUrl = reader.result as string;
+          setSelectedImage(base64ImageUrl);
+          setUploadProgress(90);
 
-        const response = await analyzeDeviceAction(base64ImageUrl, user.uid);
+          const response = await analyzeDeviceAction(base64ImageUrl, user.uid);
 
-        if (response.error || !response.result) {
-          throw new Error(response.error || 'Analysis failed to return a result.');
+          if (response.error || !response.result) {
+            throw new Error(response.error || 'Analysis failed to return a result.');
+          }
+
+          setUploadProgress(100);
+          setAnalysisResult(response.result);
+          onAnalysisComplete?.(response.result);
+        } catch (err: any) {
+          console.error('Analysis failed:', err);
+          setError(err.message || 'Failed to analyze image. Please try again.');
+          setUploadProgress(0);
+        } finally {
+          setIsAnalyzing(false);
         }
-
-        setUploadProgress(100);
-        setAnalysisResult(response.result);
-        onAnalysisComplete?.(response.result);
       };
     } catch (err: any) {
       console.error('Analysis failed:', err);
       setError(err.message || 'Failed to analyze image. Please try again.');
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
@@ -166,13 +173,7 @@ export function DeviceAnalyzer({ onAnalysisComplete }: DeviceAnalyzerProps) {
 
           {/* Progress Bar */}
           {isAnalyzing && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Analyzing device...</span>
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-              </div>
-              <Progress value={uploadProgress} className="h-2" />
-            </div>
+            <LoadingSpinner text="Analyzing device..." />
           )}
 
           {/* Error Display */}

@@ -20,26 +20,16 @@ export const ewasteDataTool = ai.defineTool(
       brand: z.string().describe('The brand of the device, e.g., "Apple", "Samsung"'),
       model: z.string().describe('The model of the device, e.g., "iPhone 14", "Galaxy S23"'),
     }),
-    outputSchema: z.union([EwasteDeviceDataSchema, z.null()]).describe('The impact data for the device, or null if not found.'),
+    outputSchema: z.union([EwasteDbSchema, z.null()]).describe('The impact data for the device, or null if not found.'),
   },
   async ({ brand, model }) => {
-    console.log(`[Tool] Searching for device: ${brand} ${model}`);
-    
     const lowerCaseBrand = brand.toLowerCase();
     const lowerCaseModel = model.toLowerCase();
-
     const device = ewasteDB.find(
       (d) =>
         d.brand.toLowerCase() === lowerCaseBrand &&
         d.model.toLowerCase() === lowerCaseModel
     );
-
-    if (device) {
-      console.log(`[Tool] Found device:`, device);
-      return device;
-    }
-    
-    console.log(`[Tool] Device not found.`);
-    return null;
+    return device || null;
   }
 );

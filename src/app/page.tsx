@@ -8,9 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Leaf, Recycle, Bot, MapPin, Calculator, TrendingUp, Globe, Shield, Zap, Users, Award, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleNavigate = (path: string) => {
+    setLoading(true);
+    router.push(path);
+  };
+
+  if (loading) {
+    return <LoadingSpinner text="Loading page..." />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
@@ -33,11 +46,11 @@ export default function LandingPage() {
             <Link href="#about" className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">
               About
             </Link>
-            <Button variant="ghost" asChild>
-              <Link href="/login">Log In</Link>
+            <Button variant="ghost" onClick={() => handleNavigate('/login')}>
+              Log In
             </Button>
-            <Button asChild className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
-              <Link href="/dashboard">Get Started</Link>
+            <Button onClick={() => handleNavigate('/dashboard')} className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+              Get Started
             </Button>
           </nav>
           {/* Mobile Menu Button */}
@@ -89,17 +102,17 @@ export default function LandingPage() {
               Discover the real environmental impact of your devices, find authorised e-waste recycling centres across India, and get expert guidance on responsible e-waste management as per Indian regulations.
             </p>
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 sm:px-0">
-              <Button asChild size="lg" className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-                <Link href="/dashboard" className="flex items-center justify-center gap-2">
+              <Button onClick={() => handleNavigate('/dashboard')} size="lg" className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+                <span className="flex items-center justify-center gap-2">
                   <Calculator className="w-4 h-4 sm:w-5 sm:h-5" />
                   Calculate Your Impact
-                </Link>
+                </span>
               </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold transition-all duration-300">
-                <Link href="/locator" className="flex items-center justify-center gap-2">
+              <Button variant="outline" size="lg" onClick={() => handleNavigate('/locator')} className="w-full sm:w-auto border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold transition-all duration-300">
+                <span className="flex items-center justify-center gap-2">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                   Find Recycling Centers
-                </Link>
+                </span>
               </Button>
             </div>
             <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 text-xs sm:text-sm text-gray-500 px-4 sm:px-0">
@@ -221,11 +234,11 @@ export default function LandingPage() {
             <p className="text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto text-sm sm:text-base px-4 sm:px-0">
               Join thousands of users across India who are already making informed decisions about their electronic devices and contributing to a sustainable future for the country.
             </p>
-            <Button asChild size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-              <Link href="/dashboard" className="flex items-center justify-center gap-2">
+            <Button onClick={() => handleNavigate('/dashboard')} size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 sm:px-8 py-3 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+              <span className="flex items-center justify-center gap-2">
                 <Recycle className="w-4 h-4 sm:w-5 sm:h-5" />
                 Start Your Journey
-              </Link>
+              </span>
             </Button>
           </div>
         </section>

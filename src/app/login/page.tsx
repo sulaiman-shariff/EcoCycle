@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Leaf, AlertCircle, Mail, Lock, ArrowRight, Shield, Sparkles, Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -31,6 +32,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [navigating, setNavigating] = useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -45,6 +47,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await signInWithEmail(values.email, values.password);
+      setNavigating(true);
       router.push('/dashboard');
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
@@ -62,6 +65,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await signInWithGoogle();
+      setNavigating(true);
       router.push('/dashboard');
     } catch (err: any) {
        setError(err.message || 'Failed to sign in with Google.');
@@ -69,6 +73,10 @@ export default function LoginPage() {
         setLoading(false);
     }
   };
+
+  if (navigating) {
+    return <LoadingSpinner text="Logging in..." />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4">

@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Leaf, AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 const signupSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -23,6 +24,7 @@ export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [navigating, setNavigating] = useState(false);
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
@@ -37,12 +39,17 @@ export default function SignupPage() {
     setError(null);
     try {
       await signUpWithEmail(values.email, values.password);
+      setNavigating(true);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (navigating) {
+    return <LoadingSpinner text="Creating your account..." />;
   }
 
   return (

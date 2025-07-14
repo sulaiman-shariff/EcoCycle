@@ -1,13 +1,4 @@
 'use server';
-
-/**
- * @fileOverview A flow to get environmental impact insights for a specific electronic device.
- *
- * - getImpactInsights - A function that handles the process of getting impact insights.
- * - GetImpactInsightsInput - The input type for the getImpactInsights function.
- * - GetImpactInsightsOutput - The return type for the getImpactInsights function.
- */
-
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { calculateDeviceImpact } from '@/lib/impact-calculator';
@@ -24,27 +15,16 @@ const ewasteDataTool = ai.defineTool(
     outputSchema: z.union([EwasteDeviceData, z.null()]).describe('The impact data for the device, or null if not found.'),
   },
   async ({ brand, model }) => {
-    console.log(`[Tool] Searching for device: ${brand} ${model}`);
-    
     const lowerCaseBrand = brand.toLowerCase();
     const lowerCaseModel = model.toLowerCase();
-
     const device = ewasteDB.find(
       (d) =>
         d.brand.toLowerCase() === lowerCaseBrand &&
         d.model.toLowerCase() === lowerCaseModel
     );
-
-    if (device) {
-      console.log(`[Tool] Found device:`, device);
-      return device;
-    }
-    
-    console.log(`[Tool] Device not found.`);
-    return null;
+    return device || null;
   }
 );
-
 
 const GetImpactInsightsInputSchema = z.object({
   deviceType: z.string().describe('The type of electronic device (e.g., smartphone, laptop).'),
@@ -137,7 +117,6 @@ const getImpactInsightsFlow = ai.defineFlow(
     };
   }
 );
-
 
 export async function getImpactInsights(input: GetImpactInsightsInput): Promise<GetImpactInsightsOutput> {
     return getImpactInsightsFlow(input);

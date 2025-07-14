@@ -1,11 +1,32 @@
 
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { protos } from '@google-cloud/vision';
+import * as path from 'path';
 
-// Initialize Vision API client.
-// In a Google Cloud environment (like App Hosting), the client will automatically
-// find the service account credentials without needing a key file.
-const vision = new ImageAnnotatorClient();
+// Initialize Vision API client with service account credentials
+let vision: ImageAnnotatorClient;
+
+try {
+  // Try to use service account key file if available
+  const keyFilePath = process.env.GOOGLE_CLOUD_KEY_FILE || './striped-sight-443116-g6-a85ecf31e5a9.json';
+  const fullPath = path.resolve(process.cwd(), keyFilePath);
+  
+  // Check if the file exists
+  const fs = require('fs');
+  if (fs.existsSync(fullPath)) {
+    vision = new ImageAnnotatorClient({
+      keyFilename: fullPath
+    });
+    console.log('Vision API client initialized with service account key file');
+  } else {
+    console.warn('Service account key file not found, using default credentials');
+    vision = new ImageAnnotatorClient();
+  }
+} catch (error) {
+  console.warn('Could not load service account key file, trying default credentials:', error);
+  // Fallback to default credentials (for Google Cloud environments)
+  vision = new ImageAnnotatorClient();
+}
 
 export interface VisionAnalysisResult {
   deviceType: string;
@@ -65,28 +86,33 @@ const CONDITION_KEYWORDS = {
 
 export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalysisResult> => {
   try {
+    // Validate input
+    if (!imageUrl || !imageUrl.startsWith('data:image/')) {
+      throw new Error('Invalid image format. Please provide a valid base64 image.');
+    }
+
     // The imageUrl is a base64 data URI. We need to extract the raw base64 data.
     const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, '');
 
-    const imageRequest = {
-      image: {
-        content: base64Data,
-      },
-    };
+    // Validate base64 data
+    if (!base64Data || base64Data.length === 0) {
+      throw new Error('Invalid image data. Please try uploading the image again.');
+    }
 
-    // Perform multiple analyses
-    const [labelResult, textResult, objectResult] = await Promise.all([
-      vision.labelDetection(imageRequest),
-      vision.textDetection(imageRequest),
-      vision.objectLocalization(imageRequest),
-    ]).catch(err => {
-        console.error("Vision API Promise.all failed", err);
-        throw new Error("One or more Vision API calls failed.");
+    // Fix: Pass the correct image object to annotateImage
+    const [result] = await vision.annotateImage({
+      image: { content: base64Data },
+      features: [
+        { type: 'LABEL_DETECTION' },
+        { type: 'TEXT_DETECTION' },
+        { type: 'OBJECT_LOCALIZATION' }
+      ]
     });
 
-    const labels = labelResult[0]?.labelAnnotations || [];
-    const textBlocks = textResult[0]?.textAnnotations || [];
-    const objects = objectResult[0]?.localizedObjectAnnotations || [];
+    // Parse result for labels, text, and objects as needed
+    const labels = result.labelAnnotations || [];
+    const textBlocks = result.textAnnotations || [];
+    const objects = result.localizedObjectAnnotations || [];
 
     // Extract text content
     const textContent = (textBlocks[0]?.description || '')
@@ -123,10 +149,34 @@ export const analyzeDeviceImage = async (imageUrl: string): Promise<VisionAnalys
       suggestedRecyclingValue,
       environmentalImpact
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Vision API analysis failed:', error);
-    throw new Error('Failed to analyze image with Vision API.');
+    
+    // Re-throw the error with the original message if it's already a custom error
+    if (error.message && !error.message.includes('Vision API error')) {
+      throw error;
+    }
+    
+    throw new Error('Failed to analyze image with Vision API. Please try again.');
   }
+};
+
+// Fallback function for when Vision API is not available
+const provideBasicAnalysis = (): VisionAnalysisResult => {
+  return {
+    deviceType: 'other',
+    confidence: 0.3,
+    brand: undefined,
+    model: undefined,
+    condition: 'good',
+    features: ['Electronic Device'],
+    suggestedRecyclingValue: 25,
+    environmentalImpact: {
+      co2Manufacturing: 50,
+      co2Usage: 12.5,
+      materialsRecoverable: ['Plastic', 'Metal', 'Glass', 'Electronics']
+    }
+  };
 };
 
 const analyzeDeviceType = (

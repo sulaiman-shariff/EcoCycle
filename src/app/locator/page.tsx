@@ -1,8 +1,9 @@
 import { RecyclingLocator } from "@/components/recycling-locator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, MapPin, AlertTriangle, Search, Award, Shield, Globe, Users, Leaf } from "lucide-react";
+import { Terminal, MapPin, AlertTriangle, Search, Award, Shield, Globe, Users, Leaf, Home, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Link from 'next/link';
 
 export default function LocatorPage() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -61,6 +62,15 @@ export default function LocatorPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between items-center mb-4 gap-2">
+        <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-800 font-semibold shadow transition-colors">
+          <Home className="w-4 h-4" /> Home
+        </Link>
+        <Link href="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold shadow transition-colors">
+          Dashboard <BarChart3 className="w-4 h-4" />
+        </Link>
+      </div>
       {/* Header Section */}
       <div className="text-center space-y-3 sm:space-y-4">
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">

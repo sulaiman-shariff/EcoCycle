@@ -2,17 +2,16 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthContextProvider } from '@/lib/firebase/auth';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { PageTransitionLoader } from '@/components/PageTransitionLoader';
 
 export const metadata: Metadata = {
   title: 'EcoCycle',
   description: 'Your guide to responsible e-waste management.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -23,11 +22,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
         <AuthContextProvider>
-          <div className="flex flex-col min-h-screen w-full">
-            <main className="w-full flex-1 flex flex-col px-2 sm:px-6 md:px-8">
-              {children}
-            </main>
-          </div>
+          <ProtectedRoute>
+            <PageTransitionLoader />
+            <div className="flex flex-col min-h-screen w-full">
+              <main className="w-full flex-1 flex flex-col px-2 sm:px-6 md:px-8">
+                {children}
+              </main>
+            </div>
+          </ProtectedRoute>
         </AuthContextProvider>
         <Toaster />
       </body>

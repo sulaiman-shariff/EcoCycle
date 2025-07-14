@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, MapPin, Search, AlertTriangle, Navigation, Star, Clock, Award, Shield, Leaf } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface RecyclingCenter {
   id: string;
@@ -189,10 +190,7 @@ export function RecyclingLocator() {
           className="h-10 sm:h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
         >
           {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Searching...
-            </>
+            <LoadingSpinner text="Searching for centers..." />
           ) : (
             <>
               <Search className="mr-2 h-4 w-4" />
