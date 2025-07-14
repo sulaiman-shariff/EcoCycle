@@ -8,8 +8,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Allow access to login and signup pages
-  const publicPaths = ['/login', '/signup'];
+  // Allow access to login, signup, and landing (/) pages
+  const publicPaths = ['/', '/login', '/signup'];
 
   useEffect(() => {
     if (!loading && !user && !publicPaths.includes(pathname)) {
